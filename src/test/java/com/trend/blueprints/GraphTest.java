@@ -23,7 +23,7 @@ public class GraphTest extends AbstractHBaseMiniClusterTest {
     AbstractHBaseMiniClusterTest.setUpBeforeClass();
     importData(
         new String[] {
-            "-Dimporttsv.columns=HBASE_ROW_KEY,property:name,property:lang,property:age", 
+            "-Dimporttsv.columns=HBASE_ROW_KEY,property:name,property:lang@String,property:age@String", 
             "-Dimporttsv.separator=|"}, 
         "test.vertex", 
         new String[] {"property"}, 
@@ -31,7 +31,7 @@ public class GraphTest extends AbstractHBaseMiniClusterTest {
     
     importData(
         new String[] {
-            "-Dimporttsv.columns=HBASE_ROW_KEY,property:weight", 
+            "-Dimporttsv.columns=HBASE_ROW_KEY,property:weight@String", 
             "-Dimporttsv.separator=|"}, 
         "test.edge", 
         new String[] {"property"}, 

@@ -14,5 +14,6 @@ public class HBaseGraphConstants {
   static final String HBASE_GRAPH_TABLE_EDGE_NAME_KEY = "hbase.graph.table.edge.name";
   
   static final String HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME = "property";
-
+  
+  static final String HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER = "@";
 }

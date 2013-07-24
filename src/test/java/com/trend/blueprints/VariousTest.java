@@ -1,0 +1,39 @@
+package com.trend.blueprints;
+
+import static org.junit.Assert.*;
+
+import java.math.BigDecimal;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class VariousTest {
+
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
+  }
+
+  @AfterClass
+  public static void tearDownAfterClass() throws Exception {
+  }
+
+  @Before
+  public void setUp() throws Exception {
+  }
+
+  @After
+  public void tearDown() throws Exception {
+  }
+
+  @Test
+  public void testClassName() {
+    System.out.println(String.class.getSimpleName());
+    System.out.println(Integer.class.getSimpleName());
+    System.out.println(Long.class.getSimpleName());
+    System.out.println(BigDecimal.class.getSimpleName());
+  }
+
+}

@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.GraphQuery;
-import com.trend.blueprints.util.PropertyUtil;
 
 /**
  * @author scott_miao
@@ -188,17 +187,17 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(String key, Object value) {
     if(null == key || "".equals(key) || null == value) return null;
     HTableInterface table = this.POOL.getTable(VERTEX_TABLE_NAME);
-    byte[] valueBytes = null;
+    Properties.Pair<byte[], byte[]> pair = null;
     Scan scan = new Scan();
     List<com.tinkerpop.blueprints.Vertex> vertices = new ArrayList<com.tinkerpop.blueprints.Vertex>();
     try {
-      valueBytes = PropertyUtil.valueToBytes(value);
+      pair = Properties.keyValueToBytes(key, value);
     } catch (UnsupportedDataTypeException e) {
       LOG.error("valueToBytes failed", e);
       throw new RuntimeException(e);
     }
     SingleColumnValueFilter filter = new SingleColumnValueFilter(
-        Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME), Bytes.toBytes(key), CompareOp.EQUAL, valueBytes);
+        Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME), pair.key, CompareOp.EQUAL, pair.value);
     filter.setFilterIfMissing(true);
     scan.setFilter(filter);
     try {
