@@ -3,12 +3,14 @@
  */
 package com.trend.blueprints;
 
-import java.math.BigDecimal;
 import java.util.Set;
 
 import javax.activation.UnsupportedDataTypeException;
 
-import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -48,6 +50,13 @@ public abstract class AbstractElement implements Element {
       LOG.error("proerties.addProperty failed", e);
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * @return the graph
+   */
+  protected Graph getGraph() {
+    return graph;
   }
 
   /* (non-Javadoc)
@@ -104,6 +113,43 @@ public abstract class AbstractElement implements Element {
       LOG.error("properties.setProperty failed", e);
       throw new RuntimeException(e);
     }
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37).
+        append(id).
+        toHashCode();
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) { return false; }
+    if (obj == this) { return true; }
+    if (obj.getClass() != getClass()) {
+      return false;
+    }
+    AbstractElement rhs = (AbstractElement) obj;
+    return new EqualsBuilder()
+                  .append(this.id, rhs.id)
+                  .isEquals();
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).
+        append("id", id).
+        append("properties", properties).
+        toString();
   }
   
 }

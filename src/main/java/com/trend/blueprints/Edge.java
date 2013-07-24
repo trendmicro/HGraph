@@ -3,21 +3,21 @@
  */
 package com.trend.blueprints;
 
-import java.util.Set;
-
-import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
+ * An <code>Edge</code> impl.
  * @author scott_miao
  *
  */
 public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Edge {
-
+  
+  private static final String DELIMITER_1 = "-";
+  private static final String DELIMITER_2 = "->";
+  
   /**
    * @param result
    * @param graph
@@ -26,60 +26,42 @@ public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Ed
     super(result, graph);
   }
 
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#getProperty(java.lang.String)
-   */
-  public <T> T getProperty(String arg0) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#getPropertyKeys()
-   */
-  public Set<String> getPropertyKeys() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#remove()
-   */
-  public void remove() {
-    // TODO Auto-generated method stub
-
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#removeProperty(java.lang.String)
-   */
-  public <T> T removeProperty(String arg0) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#setProperty(java.lang.String, java.lang.Object)
-   */
-  public void setProperty(String arg0, Object arg1) {
-    // TODO Auto-generated method stub
-
-  }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Edge#getLabel()
    */
   public String getLabel() {
-    // TODO Auto-generated method stub
-    return null;
+    String label = null;
+    String id = (String)this.getId();
+    int idx1 = id.indexOf(DELIMITER_1);
+    int idx2 = id.indexOf(DELIMITER_2);
+    label = id.substring(idx1 + DELIMITER_1.length(), idx2);
+    return label;
   }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Edge#getVertex(com.tinkerpop.blueprints.Direction)
    */
-  public Vertex getVertex(Direction arg0) throws IllegalArgumentException {
-    // TODO Auto-generated method stub
-    return null;
+  public Vertex getVertex(Direction direction) throws IllegalArgumentException {
+    if(null == direction) return null;
+    int idx = 0;
+    String id = (String)this.getId();
+    String vertexId = null;
+    switch(direction) {
+    
+    case IN:
+      idx = id.indexOf(DELIMITER_1);
+      vertexId = id.substring(0, idx);
+      break;
+    case OUT:
+      idx = id.indexOf(DELIMITER_2);
+      vertexId = id.substring(idx + DELIMITER_2.length(), id.length());
+      break;
+     default:
+       throw new IllegalArgumentException(
+           "direction:" + direction + " is not supported");
+    }
+    return this.getGraph().getVertex(vertexId);
   }
 
 }

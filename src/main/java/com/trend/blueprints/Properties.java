@@ -12,6 +12,8 @@ import java.util.Set;
 import javax.activation.UnsupportedDataTypeException;
 
 import org.apache.commons.lang.Validate;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -74,6 +76,17 @@ public class Properties {
     return oldValue;
   }
   
+  /* (non-Javadoc)
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).
+        append("keyValueMap", keyValueMap).
+        append("keyValueTypeMap", keyValueTypeMap).
+        toString();
+  }
+
   static interface PairStrategy<K, V> {
     Pair<K, V> getStringPair(String key, String value);
     Pair<K, V> getIntPair(String key, Integer value);

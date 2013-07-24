@@ -13,7 +13,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.VertexQuery;
 
 /**
- * The <code>Vertex</code> object.
+ * The <code>Vertex</code> impl.
  * @author scott_miao
  *
  */
