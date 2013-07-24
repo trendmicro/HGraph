@@ -35,5 +35,17 @@ public class VariousTest {
     System.out.println(Long.class.getSimpleName());
     System.out.println(BigDecimal.class.getSimpleName());
   }
+  
+  @Test
+  public void testSubString() {
+    String delimiter = "@";
+    String prefix = "abcd";
+    String suffix = "efgh";
+    String value = prefix + delimiter + suffix;
+    
+    assertEquals(prefix, value.substring(0, value.indexOf(delimiter)));
+    assertEquals(suffix, value.substring(value.indexOf(delimiter) + 1, value.length()));
+    
+  }
 
 }

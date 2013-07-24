@@ -11,6 +11,8 @@ import javax.activation.UnsupportedDataTypeException;
 import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tinkerpop.blueprints.Element;
 
@@ -25,7 +27,10 @@ public abstract class AbstractElement implements Element {
   private final String vertexTableName;
   private final String edgeTableName;
   
-  private Result result;
+  private String id;
+  private Properties properties = new Properties();
+  
+  private static Logger LOG = LoggerFactory.getLogger(AbstractElement.class);
   
   /**
    * @param result
@@ -36,17 +41,20 @@ public abstract class AbstractElement implements Element {
   protected AbstractElement(Result result, HTablePool pool, String vertexTableName,
       String edgeTableName) {
     super();
-    this.result = result;
     this.pool = pool;
     this.vertexTableName = vertexTableName;
     this.edgeTableName = edgeTableName;
+    this.extractValues(result);
   }
-
-  /**
-   * @return the result
-   */
-  protected Result getResult() {
-    return result;
+  
+  private void extractValues(Result r) {
+    this.id = Bytes.toString(r.getRow());
+    try {
+      this.properties.addProperty(r);
+    } catch (UnsupportedDataTypeException e) {
+      LOG.error("proerties.addProperty failed", e);
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -75,16 +83,16 @@ public abstract class AbstractElement implements Element {
    */
   @Override
   public Object getId() {
-    return Bytes.toString(this.getResult().getRow());
+    return this.id;
   }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#getProperty(java.lang.String)
    */
+  @SuppressWarnings("unchecked")
   @Override
-  public <T> T getProperty(String arg0) {
-    // TODO Auto-generated method stub
-    return null;
+  public <T> T getProperty(String key) {
+    return (T) this.properties.getProperty(key);
   }
 
   /* (non-Javadoc)
@@ -92,8 +100,7 @@ public abstract class AbstractElement implements Element {
    */
   @Override
   public Set<String> getPropertyKeys() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.properties.getPropertyKeys();
   }
 
   /* (non-Javadoc)
@@ -102,25 +109,29 @@ public abstract class AbstractElement implements Element {
   @Override
   public void remove() {
     // TODO Auto-generated method stub
-
+    throw new UnsupportedOperationException();
   }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#removeProperty(java.lang.String)
    */
+  @SuppressWarnings("unchecked")
   @Override
-  public <T> T removeProperty(String arg0) {
-    // TODO Auto-generated method stub
-    return null;
+  public <T> T removeProperty(String key) {
+    return (T) this.properties.removeProperty(key);
   }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#setProperty(java.lang.String, java.lang.Object)
    */
   @Override
-  public void setProperty(String arg0, Object arg1) {
-    // TODO Auto-generated method stub
-
+  public void setProperty(String key, Object value) {
+    try {
+      this.properties.setProperty(key, value);
+    } catch (UnsupportedDataTypeException e) {
+      LOG.error("properties.setProperty failed", e);
+      throw new RuntimeException(e);
+    }
   }
   
 }
