@@ -131,8 +131,16 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    * @see com.tinkerpop.blueprints.Graph#getEdges(java.lang.String, java.lang.Object)
    */
   public Iterable<com.tinkerpop.blueprints.Edge> getEdges(String key, Object value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    List<com.tinkerpop.blueprints.Edge> edges = new ArrayList<com.tinkerpop.blueprints.Edge>();
+    
+    collectElements(key, value, 
+        new CollectElementStrategy<com.tinkerpop.blueprints.Edge>(this.EDGE_TABLE_NAME, edges) {
+          @Override
+          com.tinkerpop.blueprints.Edge newElement(Result r, Graph graph) {
+            return new Edge(r, graph);
+          }
+    });
+    return edges;
   }
 
   /* (non-Javadoc)
@@ -183,11 +191,51 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    * @see com.tinkerpop.blueprints.Graph#getVertices(java.lang.String, java.lang.Object)
    */
   public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(String key, Object value) {
-    if(null == key || "".equals(key) || null == value) return null;
-    HTableInterface table = this.POOL.getTable(VERTEX_TABLE_NAME);
+    List<com.tinkerpop.blueprints.Vertex> vertices = new ArrayList<com.tinkerpop.blueprints.Vertex>();
+    
+    collectElements(key, value, 
+        new CollectElementStrategy<com.tinkerpop.blueprints.Vertex>(this.VERTEX_TABLE_NAME, vertices) {
+          @Override
+          com.tinkerpop.blueprints.Vertex newElement(Result r, Graph graph) {
+            return new Vertex(r, graph);
+          }
+    });
+    return vertices;
+  }
+  
+  private static abstract class CollectElementStrategy <T extends com.tinkerpop.blueprints.Element> {
+    private String tableName;
+    private List<T> elements;
+    /**
+     * @param tableName
+     * @param elements
+     */
+    CollectElementStrategy(String tableName, List<T> elements) {
+      super();
+      this.tableName = tableName;
+      this.elements = elements;
+    }
+    
+    abstract T newElement(Result r, Graph graph);
+    
+    String getTableName() {
+      return this.tableName;
+    }
+    
+    void addElement(T element) {
+      this.elements.add(element);
+    }
+    
+  }
+  
+  private <T extends com.tinkerpop.blueprints.Element> void collectElements(
+      String key, Object value, CollectElementStrategy<T> strategy) {
+    if(null == key || "".equals(key) || null == value) return ;
+    Validate.notNull(strategy, "strategy shall always not be null");
+    
+    HTableInterface table = this.POOL.getTable(strategy.getTableName());
     Properties.Pair<byte[], byte[]> pair = null;
     Scan scan = new Scan();
-    List<com.tinkerpop.blueprints.Vertex> vertices = new ArrayList<com.tinkerpop.blueprints.Vertex>();
     try {
       pair = Properties.keyValueToBytes(key, value);
     } catch (UnsupportedDataTypeException e) {
@@ -201,13 +249,13 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     try {
       ResultScanner rs = table.getScanner(scan);
       for(Result r : rs) {
-        vertices.add(new Vertex(r, this));
+        strategy.addElement(strategy.newElement(r, this));
+//        vertices.add(new Vertex(r, this));
       }
     } catch (IOException e) {
       LOG.error("getScanner failed", e);
       throw new RuntimeException(e);
     }
-    return vertices;
   }
 
   /* (non-Javadoc)

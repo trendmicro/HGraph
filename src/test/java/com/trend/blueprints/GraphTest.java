@@ -82,9 +82,17 @@ public class GraphTest extends AbstractHBaseMiniClusterTest {
     assertEquals(6, count);
   }
 
-  @Test @Ignore
+  @Test
   public void testGetEdgesStringObject() {
-    fail("Not yet implemented");
+    Iterable<com.tinkerpop.blueprints.Edge> edges = null;
+    edges = graph.getEdges("weight", "0.4");
+    assertNotNull(edges);
+    int count = 0;
+    for(com.tinkerpop.blueprints.Edge vertex : edges) {
+      assertNotNull(vertex);
+      count++;
+    }
+    assertEquals(2, count);
   }
 
   @Test
