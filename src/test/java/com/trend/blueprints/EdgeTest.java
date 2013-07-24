@@ -29,7 +29,7 @@ public class EdgeTest extends AbstractHBaseGraphTest {
   @Before
   public void setUp() throws Exception {
     this.graph = HBaseGraphFactory.open(TEST_UTIL.getConfiguration());
-    this.edge = this.graph.getEdge("40012-created->40004");
+    this.edge = this.graph.getEdge("40012-->created-->40004");
     assertNotNull(edge);
   }
 

@@ -4,12 +4,14 @@
 package com.trend.blueprints;
 
 import java.util.Set;
+import java.util.HashSet;
 
-import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.commons.lang.Validate;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.apache.hadoop.hbase.client.Result;
 
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.VertexQuery;
 
 /**
@@ -19,6 +21,7 @@ import com.tinkerpop.blueprints.VertexQuery;
  */
 public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.Vertex {
   
+  private Set<Edge> edges = null;
   
   /**
    * @param result
@@ -28,44 +31,19 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
     super(result, graph);
   }
 
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#getProperty(java.lang.String)
+  /**
+   * @return the edges
    */
-  public <T> T getProperty(String arg0) {
-    // TODO Auto-generated method stub
-    return null;
+  protected Set<Edge> getEdges() {
+    return edges;
   }
 
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#getPropertyKeys()
+  /**
+   * @param edges the edges to set
    */
-  public Set<String> getPropertyKeys() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#remove()
-   */
-  public void remove() {
-    // TODO Auto-generated method stub
-
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#removeProperty(java.lang.String)
-   */
-  public <T> T removeProperty(String arg0) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /* (non-Javadoc)
-   * @see com.tinkerpop.blueprints.Element#setProperty(java.lang.String, java.lang.Object)
-   */
-  public void setProperty(String arg0, Object arg1) {
-    // TODO Auto-generated method stub
-
+  protected void setEdges(Set<Edge> edges) {
+    Validate.notNull(edges, "edges shall always not be null");
+    this.edges = edges;
   }
 
   /* (non-Javadoc)
@@ -73,24 +51,47 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
    */
   public Edge addEdge(String arg0, com.tinkerpop.blueprints.Vertex arg1) {
     // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Vertex#getEdges(com.tinkerpop.blueprints.Direction, java.lang.String[])
    */
-  public Iterable<Edge> getEdges(Direction arg0, String... arg1) {
-    // TODO Auto-generated method stub
-    return null;
+  public Iterable<com.tinkerpop.blueprints.Edge> getEdges(Direction direction, String... labels) {
+    if(null == direction || null == labels || labels.length == 0) return null;
+    Set<com.tinkerpop.blueprints.Edge> edges = new HashSet<com.tinkerpop.blueprints.Edge>();
+    switch(direction) {
+    case OUT:
+      for(Edge edge : this.edges) {
+        for(String label : labels) {
+          if(edge.getLabel().equals(label)) {
+            edges.add(edge);
+            break;
+          }
+        }
+      }
+      break;
+    default:
+      throw new RuntimeException("direction:" + direction + " is not supported");
+    }
+    
+    return edges;
   }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Vertex#getVertices(com.tinkerpop.blueprints.Direction, java.lang.String[])
    */
-  public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(Direction arg0,
-      String... arg1) {
-    // TODO Auto-generated method stub
-    return null;
+  public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(Direction direction,
+      String... labels) {
+    Iterable<com.tinkerpop.blueprints.Edge> edges = this.getEdges(direction, labels);
+    if(null == edges) return null;
+    Set<com.tinkerpop.blueprints.Vertex> vertices = 
+        new HashSet<com.tinkerpop.blueprints.Vertex>();
+    
+    for(com.tinkerpop.blueprints.Edge edge : edges) {
+      vertices.add(edge.getVertex(direction));
+    }
+    return vertices;
   }
 
   /* (non-Javadoc)
@@ -98,7 +99,18 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
    */
   public VertexQuery query() {
     // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException();
+  }
+
+  /* (non-Javadoc)
+   * @see com.trend.blueprints.AbstractElement#toString()
+   */
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).
+        appendSuper(super.toString()).
+        append("edges", edges).
+        toString();
   }
 
 }

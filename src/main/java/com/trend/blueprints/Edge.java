@@ -15,9 +15,6 @@ import com.tinkerpop.blueprints.Vertex;
  */
 public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Edge {
   
-  private static final String DELIMITER_1 = "-";
-  private static final String DELIMITER_2 = "->";
-  
   /**
    * @param result
    * @param graph
@@ -33,9 +30,9 @@ public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Ed
   public String getLabel() {
     String label = null;
     String id = (String)this.getId();
-    int idx1 = id.indexOf(DELIMITER_1);
-    int idx2 = id.indexOf(DELIMITER_2);
-    label = id.substring(idx1 + DELIMITER_1.length(), idx2);
+    int idx1 = id.indexOf(HBaseGraphConstants.DELIMITER_1);
+    int idx2 = id.indexOf(HBaseGraphConstants.DELIMITER_2, idx1 + HBaseGraphConstants.DELIMITER_1.length());
+    label = id.substring(idx1 + HBaseGraphConstants.DELIMITER_1.length(), idx2);
     return label;
   }
 
@@ -50,12 +47,13 @@ public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Ed
     switch(direction) {
     
     case IN:
-      idx = id.indexOf(DELIMITER_1);
+      idx = id.indexOf(HBaseGraphConstants.DELIMITER_1);
       vertexId = id.substring(0, idx);
       break;
     case OUT:
-      idx = id.indexOf(DELIMITER_2);
-      vertexId = id.substring(idx + DELIMITER_2.length(), id.length());
+      idx = id.indexOf(HBaseGraphConstants.DELIMITER_1);
+      idx = id.indexOf(HBaseGraphConstants.DELIMITER_2, idx + HBaseGraphConstants.DELIMITER_1.length());
+      vertexId = id.substring(idx + HBaseGraphConstants.DELIMITER_2.length(), id.length());
       break;
      default:
        throw new IllegalArgumentException(

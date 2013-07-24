@@ -6,6 +6,8 @@ package com.trend.blueprints;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.activation.UnsupportedDataTypeException;
 
@@ -160,7 +162,31 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     Result r = getResult(id, this.VERTEX_TABLE_NAME);
     if(r.isEmpty()) return null;
     
-    Vertex vertex = new Vertex(r, this);
+    Vertex vertex = this.getVertex(r, this);
+    return vertex;
+  }
+  
+  private Vertex getVertex(Result r, Graph graph) {
+    Vertex vertex = new Vertex(r, graph);
+    Set<Edge> edges = new HashSet<Edge>();
+    HTableInterface table = this.POOL.getTable(EDGE_TABLE_NAME);
+    Scan scan = new Scan();
+    scan.setStartRow(Bytes.toBytes(vertex.getId() + HBaseGraphConstants.DELIMITER_1));
+    scan.setStopRow(Bytes.toBytes(vertex.getId() + "~"));
+    ResultScanner rs;
+    try {
+      rs = table.getScanner(scan);
+      for(Result r1 : rs) {
+        edges.add(new Edge(r1, graph));
+      }
+    } catch (IOException e) {
+      LOG.error("egdse.add failed", e);
+      throw new RuntimeException(e);
+    } finally {
+      this.POOL.putTable(table);
+    }
+    vertex.setEdges(edges);
+    
     return vertex;
   }
 
@@ -176,7 +202,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     try {
       rs = table.getScanner(scan);
       for(Result r : rs) {
-        vertices.add(new Vertex(r, this));
+        vertices.add(this.getVertex(r, this));
       }
     } catch (IOException e) {
       LOG.error("getVertices failed", e);
@@ -197,7 +223,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
         new CollectElementStrategy<com.tinkerpop.blueprints.Vertex>(this.VERTEX_TABLE_NAME, vertices) {
           @Override
           com.tinkerpop.blueprints.Vertex newElement(Result r, Graph graph) {
-            return new Vertex(r, graph);
+            return getVertex(r, graph);
           }
     });
     return vertices;
@@ -250,7 +276,6 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
       ResultScanner rs = table.getScanner(scan);
       for(Result r : rs) {
         strategy.addElement(strategy.newElement(r, this));
-//        vertices.add(new Vertex(r, this));
       }
     } catch (IOException e) {
       LOG.error("getScanner failed", e);

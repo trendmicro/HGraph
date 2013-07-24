@@ -336,7 +336,9 @@ public class Properties {
     for(KeyValue kv : kvs) {
       keyStr = Bytes.toString(kv.getQualifier());
       delIdx = keyStr.indexOf(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER);
-      typeStr = keyStr.substring(delIdx + 1, keyStr.length());
+      typeStr = keyStr.substring(delIdx + 
+          HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER.length(), 
+          keyStr.length());
       keyStr = keyStr.substring(0, delIdx);
       value = kv.getValue();
       if(String.class.getSimpleName().equals(typeStr)) {

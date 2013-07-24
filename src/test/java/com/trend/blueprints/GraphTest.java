@@ -36,7 +36,7 @@ public class GraphTest extends AbstractHBaseGraphTest {
   @Test
   public void testGetEdge() {
     Edge edge = null;
-    String id = "40012-created->40004";
+    String id = "40012-->created-->40004";
     edge = graph.getEdge(id);
     assertNotNull(edge);
     assertEquals(id, edge.getId());
