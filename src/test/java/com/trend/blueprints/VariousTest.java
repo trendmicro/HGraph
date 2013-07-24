@@ -46,6 +46,10 @@ public class VariousTest {
     assertEquals(prefix, value.substring(0, value.indexOf(delimiter)));
     assertEquals(suffix, value.substring(value.indexOf(delimiter) + 1, value.length()));
     
+    delimiter = "@@";
+    value = prefix + delimiter + suffix;
+    assertEquals(prefix, value.substring(0, value.indexOf(delimiter)));
+    assertEquals(suffix, value.substring(value.indexOf(delimiter) + delimiter.length(), value.length()));
   }
 
 }
