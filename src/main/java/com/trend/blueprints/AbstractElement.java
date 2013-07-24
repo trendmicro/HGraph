@@ -23,9 +23,7 @@ import com.tinkerpop.blueprints.Element;
  */
 public abstract class AbstractElement implements Element {
   
-  private final HTablePool pool;
-  private final String vertexTableName;
-  private final String edgeTableName;
+  private final Graph graph;
   
   private String id;
   private Properties properties = new Properties();
@@ -34,16 +32,11 @@ public abstract class AbstractElement implements Element {
   
   /**
    * @param result
-   * @param pool
-   * @param vertexTableName
-   * @param edgeTableName
+   * @param graph
    */
-  protected AbstractElement(Result result, HTablePool pool, String vertexTableName,
-      String edgeTableName) {
+  protected AbstractElement(Result result, Graph graph) {
     super();
-    this.pool = pool;
-    this.vertexTableName = vertexTableName;
-    this.edgeTableName = edgeTableName;
+    this.graph = graph;
     this.extractValues(result);
   }
   
@@ -55,27 +48,6 @@ public abstract class AbstractElement implements Element {
       LOG.error("proerties.addProperty failed", e);
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * @return the pool
-   */
-  protected HTablePool getPool() {
-    return pool;
-  }
-
-  /**
-   * @return the vertexTableName
-   */
-  protected String getVertexTableName() {
-    return vertexTableName;
-  }
-
-  /**
-   * @return the edgeTableName
-   */
-  protected String getEdgeTableName() {
-    return edgeTableName;
   }
 
   /* (non-Javadoc)

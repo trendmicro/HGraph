@@ -20,12 +20,10 @@ public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Ed
 
   /**
    * @param result
-   * @param pool
-   * @param vertexTableName
-   * @param edgeTableName
+   * @param graph
    */
-  protected Edge(Result result, HTablePool pool, String vertexTableName, String edgeTableName) {
-    super(result, pool, vertexTableName, edgeTableName);
+  protected Edge(Result result, Graph graph) {
+    super(result, graph);
   }
 
   /* (non-Javadoc)

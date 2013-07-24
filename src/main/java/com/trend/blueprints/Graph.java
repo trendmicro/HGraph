@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.activation.UnsupportedDataTypeException;
-import javax.management.RuntimeErrorException;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
@@ -18,7 +17,6 @@ import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -87,7 +85,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     Result r = getResult(key, this.EDGE_TABLE_NAME);
     if(r.isEmpty()) return null;
     
-    Edge edge = new Edge(r, this.POOL, this.VERTEX_TABLE_NAME, this.EDGE_TABLE_NAME);
+    Edge edge = new Edge(r, this);
     return edge;
   }
 
@@ -118,7 +116,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     try {
       rs = table.getScanner(scan);
       for(Result r : rs) {
-        edges.add(new Edge(r, this.POOL, this.VERTEX_TABLE_NAME, this.EDGE_TABLE_NAME));
+        edges.add(new Edge(r, this));
       }
     } catch (IOException e) {
       LOG.error("getEdges failed", e);
@@ -154,7 +152,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     Result r = getResult(id, this.VERTEX_TABLE_NAME);
     if(r.isEmpty()) return null;
     
-    Vertex vertex = new Vertex(r, this.POOL, this.VERTEX_TABLE_NAME, this.EDGE_TABLE_NAME);
+    Vertex vertex = new Vertex(r, this);
     return vertex;
   }
 
@@ -170,7 +168,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     try {
       rs = table.getScanner(scan);
       for(Result r : rs) {
-        vertices.add(new Vertex(r, this.POOL, this.VERTEX_TABLE_NAME, this.EDGE_TABLE_NAME));
+        vertices.add(new Vertex(r, this));
       }
     } catch (IOException e) {
       LOG.error("getVertices failed", e);
@@ -203,7 +201,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     try {
       ResultScanner rs = table.getScanner(scan);
       for(Result r : rs) {
-        vertices.add(new Vertex(r, this.POOL, this.VERTEX_TABLE_NAME, this.EDGE_TABLE_NAME));
+        vertices.add(new Vertex(r, this));
       }
     } catch (IOException e) {
       LOG.error("getScanner failed", e);

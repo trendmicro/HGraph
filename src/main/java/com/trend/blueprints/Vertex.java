@@ -22,13 +22,10 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
   
   /**
    * @param result
-   * @param pool
-   * @param vertexTableName
-   * @param edgeTableName
+   * @param graph
    */
-  protected Vertex(Result result, HTablePool pool, String vertexTableName,
-      String edgeTableName) {
-    super(result, pool, vertexTableName, edgeTableName);
+  protected Vertex(Result result, Graph graph) {
+    super(result, graph);
   }
 
   /* (non-Javadoc)
