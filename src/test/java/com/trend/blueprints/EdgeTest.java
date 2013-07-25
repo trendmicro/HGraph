@@ -53,6 +53,11 @@ public class EdgeTest extends AbstractHBaseGraphTest {
   }
   
   @Test
+  public void testGetPropertyCount() {
+    assertEquals(1, edge.getPropertyCount());
+  }
+  
+  @Test
   public void testGetLabel() {
     String label = edge.getLabel();
     assertEquals("created", label);

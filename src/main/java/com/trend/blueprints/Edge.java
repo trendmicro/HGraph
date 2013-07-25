@@ -27,6 +27,7 @@ public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Ed
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Edge#getLabel()
    */
+  @Override
   public String getLabel() {
     String label = null;
     String id = (String)this.getId();
@@ -39,6 +40,7 @@ public class Edge extends AbstractElement implements com.tinkerpop.blueprints.Ed
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Edge#getVertex(com.tinkerpop.blueprints.Direction)
    */
+  @Override
   public Vertex getVertex(Direction direction) throws IllegalArgumentException {
     if(null == direction) return null;
     int idx = 0;

@@ -76,6 +76,14 @@ public class Properties {
     return oldValue;
   }
   
+  /**
+   * Get property count.
+   * @return
+   */
+  public long getCount() {
+    return this.keyValueMap.size();
+  }
+  
   /* (non-Javadoc)
    * @see java.lang.Object#toString()
    */

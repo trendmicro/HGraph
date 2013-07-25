@@ -59,6 +59,25 @@ public class VertexTest extends AbstractHBaseGraphTest {
     Iterable<com.tinkerpop.blueprints.Edge> edges = 
         vertex.getEdges(Direction.IN, "created");
   }
+  @Test
+  public void testGetEdges() {
+    Vertex vertex = this.graph.getVertex("40012");
+    assertNotNull(vertex);
+    Iterable<com.tinkerpop.blueprints.Edge> edges = vertex.getEdges();
+    int count = 0;
+    for(com.tinkerpop.blueprints.Edge edge : edges) {
+      assertNotNull(edge);
+      count++;
+    }
+    assertEquals(3, count);
+  }
+  
+  @Test
+  public void testGetEdgeCount() {
+    Vertex vertex = this.graph.getVertex("40012");
+    assertNotNull(vertex);
+    assertEquals(3, vertex.getEdgeCount());
+  }
 
   @Test
   public void testGetVerticesDirectionOutStringArray() {

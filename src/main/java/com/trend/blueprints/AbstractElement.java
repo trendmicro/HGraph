@@ -83,6 +83,14 @@ public abstract class AbstractElement implements Element {
   public Set<String> getPropertyKeys() {
     return this.properties.getPropertyKeys();
   }
+  
+  /**
+   * Get property count
+   * @return
+   */
+  public long getPropertyCount() {
+    return this.properties.getCount();
+  }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#remove()

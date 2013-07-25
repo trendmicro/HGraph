@@ -64,6 +64,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#addEdge(java.lang.Object, com.tinkerpop.blueprints.Vertex, com.tinkerpop.blueprints.Vertex, java.lang.String)
    */
+  @Override
   public Edge addEdge(Object arg0, com.tinkerpop.blueprints.Vertex arg1, 
       com.tinkerpop.blueprints.Vertex arg2, String arg3) {
     // TODO Auto-generated method stub
@@ -73,6 +74,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#addVertex(java.lang.Object)
    */
+  @Override
   public Vertex addVertex(Object arg0) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
@@ -81,6 +83,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getEdge(java.lang.Object)
    */
+  @Override
   public Edge getEdge(Object key) {
     if(null == key) return null;
     
@@ -109,6 +112,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getEdges()
    */
+  @Override
   public Iterable<com.tinkerpop.blueprints.Edge> getEdges() {
     HTableInterface table = this.POOL.getTable(EDGE_TABLE_NAME);
     Scan scan = new Scan();
@@ -132,6 +136,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getEdges(java.lang.String, java.lang.Object)
    */
+  @Override
   public Iterable<com.tinkerpop.blueprints.Edge> getEdges(String key, Object value) {
     List<com.tinkerpop.blueprints.Edge> edges = new ArrayList<com.tinkerpop.blueprints.Edge>();
     
@@ -148,6 +153,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getFeatures()
    */
+  @Override
   public Features getFeatures() {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
@@ -156,6 +162,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getVertex(java.lang.Object)
    */
+  @Override
   public Vertex getVertex(Object id) {
     if(null == id) return null;
     
@@ -193,6 +200,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getVertices()
    */
+  @Override
   public Iterable<com.tinkerpop.blueprints.Vertex> getVertices() {
     HTableInterface table = this.POOL.getTable(VERTEX_TABLE_NAME);
     Scan scan = new Scan();
@@ -216,6 +224,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getVertices(java.lang.String, java.lang.Object)
    */
+  @Override
   public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(String key, Object value) {
     List<com.tinkerpop.blueprints.Vertex> vertices = new ArrayList<com.tinkerpop.blueprints.Vertex>();
     
@@ -286,6 +295,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#query()
    */
+  @Override
   public GraphQuery query() {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
@@ -294,6 +304,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#removeEdge(com.tinkerpop.blueprints.Edge)
    */
+  @Override
   public void removeEdge(com.tinkerpop.blueprints.Edge arg0) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
@@ -302,6 +313,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#removeVertex(com.tinkerpop.blueprints.Vertex)
    */
+  @Override
   public void removeVertex(com.tinkerpop.blueprints.Vertex arg0) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
@@ -310,6 +322,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#shutdown()
    */
+  @Override
   public void shutdown() {
     try {
       this.POOL.close();
