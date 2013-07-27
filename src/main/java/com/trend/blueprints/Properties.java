@@ -38,6 +38,11 @@ public class Properties {
     return this.keyValueMap.get(key);
   }
   
+  @SuppressWarnings("rawtypes")
+  public Class getPropertyType(String key) {
+    return this.keyValueTypeMap.get(key);
+  }
+  
   /**
    * Get property keys.
    * @return a set of keys
@@ -72,6 +77,7 @@ public class Properties {
     Object oldValue = this.removeProperty(key);
     @SuppressWarnings("rawtypes")
     Pair<Class, Object> pair = keyValueToPair(key, value, new TypeClassPairStrategy());
+    this.keyValueMap.put(key, value);
     this.keyValueTypeMap.put(key, pair.key);
     return oldValue;
   }
@@ -378,7 +384,6 @@ public class Properties {
       }
       
       oldValue = this.addProperty(keyStr, type, newValue);
-      return oldValue;
     }
     
     return oldValue;

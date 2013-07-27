@@ -178,7 +178,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     Set<Edge> edges = new HashSet<Edge>();
     HTableInterface table = this.POOL.getTable(EDGE_TABLE_NAME);
     Scan scan = new Scan();
-    scan.setStartRow(Bytes.toBytes(vertex.getId() + HBaseGraphConstants.DELIMITER_1));
+    scan.setStartRow(Bytes.toBytes(vertex.getId() + HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1));
     scan.setStopRow(Bytes.toBytes(vertex.getId() + "~"));
     ResultScanner rs;
     try {

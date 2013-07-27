@@ -3,6 +3,7 @@ package com.trend.blueprints;
 import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -50,6 +51,13 @@ public class VariousTest {
     value = prefix + delimiter + suffix;
     assertEquals(prefix, value.substring(0, value.indexOf(delimiter)));
     assertEquals(suffix, value.substring(value.indexOf(delimiter) + delimiter.length(), value.length()));
+  }
+  
+  @Test
+  public void testUuid() {
+    UUID uuid = UUID.randomUUID();
+    System.out.println("UUID=" + uuid);
+    System.out.println("UUID.toString()=" + uuid.toString());
   }
 
 }

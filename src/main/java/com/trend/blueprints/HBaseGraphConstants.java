@@ -17,7 +17,7 @@ public class HBaseGraphConstants {
   
   public static final String HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER = "@";
 
-  public static final String DELIMITER_1 = "-->";
+  public static final String HBASE_GRAPH_TABLE_EDGE_DELIMITER_1 = "-->";
 
-  public static final String DELIMITER_2 = "-->";
+  public static final String HBASE_GRAPH_TABLE_EDGE_DELIMITER_2 = "-->";
 }
