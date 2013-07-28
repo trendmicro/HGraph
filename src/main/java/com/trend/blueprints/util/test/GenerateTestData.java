@@ -241,9 +241,10 @@ public class GenerateTestData extends Configured implements Tool {
   }
 
 
-  public static int main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception {
     Configuration conf = HBaseConfiguration.create();
-    return ToolRunner.run(conf, new GenerateTestData(), args);
+    int returnCode = ToolRunner.run(conf, new GenerateTestData(), args);
+    System.exit(returnCode);
   }
 
   /**

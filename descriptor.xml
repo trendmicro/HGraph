@@ -34,4 +34,16 @@
       </includes>
     </fileSet>
   </fileSets>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>/</outputDirectory>
+      <useProjectArtifact>true</useProjectArtifact>
+      <unpack>false</unpack>
+      <scope>runtime</scope>
+      <includes>
+        <include>commons-lang:commons-lang:*</include>
+        <include>com.tinkerpop.blueprints:blueprints-core:*</include>
+      </includes>
+    </dependencySet>
+  </dependencySets>
 </assembly>

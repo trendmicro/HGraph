@@ -12,6 +12,7 @@ import java.util.List;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -19,6 +20,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -204,9 +206,10 @@ public class GetGeneratedGraphData extends Configured implements Tool {
   }
   
   
-  public static int main(String args[]) {
-    
-    return 0;
+  public static void main(String args[]) throws Exception {
+    Configuration conf = HBaseConfiguration.create();
+    int returnCode = ToolRunner.run(conf, new GetGeneratedGraphData(), args);
+    System.exit(returnCode);
   }
   
 }

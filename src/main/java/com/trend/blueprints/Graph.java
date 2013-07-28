@@ -324,11 +324,24 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    */
   @Override
   public void shutdown() {
+    
     try {
       this.POOL.close();
-    } catch (IOException e) {
-      LOG.error("close POOL failed", e);
-      throw new RuntimeException(e);
+    } catch (IOException e1) {
+      LOG.error("pool close failed", e1);
+      throw new RuntimeException(e1);
+    } catch(Exception e2) {
+      //fallback to call old pool.close method if above not support...
+      try {
+        this.POOL.closeTablePool(this.VERTEX_TABLE_NAME);
+      } catch(Exception e3) {
+        LOG.error("pool.close " + this.VERTEX_TABLE_NAME + " failed", e3);
+      }
+      try {
+        this.POOL.closeTablePool(this.EDGE_TABLE_NAME);
+      } catch(Exception e3) {
+        LOG.error("pool.close " + this.EDGE_TABLE_NAME + " failed", e3);
+      }
     }
   }
 
