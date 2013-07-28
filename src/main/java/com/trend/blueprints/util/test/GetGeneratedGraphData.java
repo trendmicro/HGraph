@@ -117,6 +117,9 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       this.startVertexId = this.getSampleDataRowKey();
     }
     
+    LOG.info("-l:" + this.levelToTraverse + ", -i:" + this.startVertexId + 
+        ", vertex-table-name:" + this.vertexTableName + ", edge-table-name:" + this.edgeTableName);
+    
     this.doGetGeneratedGraphData(this.startVertexId);
     return 0;
   }

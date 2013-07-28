@@ -137,6 +137,9 @@ public class GenerateTestData extends Configured implements Tool {
     this.vertexTable = args[countIndex];
     this.edgeTable = args[countIndex + 1];
     
+    LOG.info("-v:" + this.vertexCount + ", -e:" + this.edgeCountPerVertex + 
+        ", vertex-table-name:" + this.vertexTable + ", edge-table-name:" + this.edgeTable);
+    
     this.doGenerateTestData();
     
     return 0;
