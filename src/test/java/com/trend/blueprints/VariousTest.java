@@ -5,10 +5,12 @@ import static org.junit.Assert.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class VariousTest {
@@ -59,5 +61,33 @@ public class VariousTest {
     System.out.println("UUID=" + uuid);
     System.out.println("UUID.toString()=" + uuid.toString());
   }
-
+  
+  @Test @Ignore //for test StopWatch behavior
+  public void testStopWatch() throws InterruptedException {
+    StopWatch timer = new StopWatch();
+    
+    // #1
+    timer.start();
+    Thread.sleep(5000);
+    timer.stop();
+    
+    System.out.println("timer.toString=" + timer.toString());
+//    System.out.println("timer.toSplitString=" + timer.toSplitString());
+    
+    // #2
+    timer.reset();
+    timer.start();
+    Thread.sleep(4000);
+    timer.split();
+    System.out.println("timer.toSplitString=" + timer.toSplitString());
+    Thread.sleep(5000);
+    timer.split();
+    System.out.println("timer.toSplitString=" + timer.toSplitString());
+    timer.unsplit();
+    Thread.sleep(6000);
+    timer.stop();
+    
+    System.out.println("timer.toString=" + timer.toString());
+    
+  }
 }

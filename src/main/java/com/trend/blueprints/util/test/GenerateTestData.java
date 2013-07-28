@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import javax.activation.UnsupportedDataTypeException;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -147,6 +148,8 @@ public class GenerateTestData extends Configured implements Tool {
     Put put = null;
     long vIdx = 0;
     byte[] parentVertexKey = null;
+    StopWatch timer = new StopWatch();
+    timer.start();
     try {
       vertexTable = new HTable(this.getConf(), this.vertexTable);
       vertexTable.setAutoFlush(false);
@@ -181,6 +184,10 @@ public class GenerateTestData extends Configured implements Tool {
     } finally {
       if(null != vertexTable) vertexTable.close();
       if(null != edgeTable) edgeTable.close();
+      timer.stop();
+      LOG.info("Time elapsed:" + timer.toString() + " for pushing " + 
+          this.vertexCount + " vertices test data to HBase");
+      LOG.info("first vertex id:" + this.firstVertex);
     }
   }
   

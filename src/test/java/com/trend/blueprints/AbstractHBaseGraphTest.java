@@ -15,7 +15,7 @@ public abstract class AbstractHBaseGraphTest extends AbstractHBaseMiniClusterTes
     AbstractHBaseMiniClusterTest.setUpBeforeClass();
     importData(
         new String[] {
-            "-Dimporttsv.columns=HBASE_ROW_KEY,property:name,property:lang@String,property:age@String", 
+            "-Dimporttsv.columns=HBASE_ROW_KEY,property:name@String,property:lang@String,property:age@String", 
             "-Dimporttsv.separator=|"}, 
         "test.vertex", 
         new String[] {"property"}, 

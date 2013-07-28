@@ -2,6 +2,7 @@ package com.trend.blueprints;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

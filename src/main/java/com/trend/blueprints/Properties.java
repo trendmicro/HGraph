@@ -337,10 +337,9 @@ public class Properties {
    * @return
    * @throws UnsupportedDataTypeException
    */
-  protected Object addProperty(Result r) throws UnsupportedDataTypeException {
+  protected void addProperty(Result r) throws UnsupportedDataTypeException {
     byte[] value = null;
     Object newValue = null;
-    Object oldValue = null;
     String keyStr = null;
     String typeStr = null;
     @SuppressWarnings("rawtypes")
@@ -383,10 +382,8 @@ public class Properties {
         throw new UnsupportedDataTypeException("Not support data type for value:" + value);
       }
       
-      oldValue = this.addProperty(keyStr, type, newValue);
+      this.addProperty(keyStr, type, newValue);
     }
-    
-    return oldValue;
   }
   
   

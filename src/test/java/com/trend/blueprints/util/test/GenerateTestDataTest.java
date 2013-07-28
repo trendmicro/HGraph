@@ -82,19 +82,23 @@ public class GenerateTestDataTest extends AbstractHBaseMiniClusterTest {
   public void testGraphIntegrity() {
     assertNotNull(firstVertex);
     Configuration conf = TEST_UTIL.getConfiguration();
-    Graph graph = HBaseGraphFactory.open(conf);
-    Vertex vertex = graph.getVertex(firstVertex);
-    assertNotNull(vertex);
-    assertEquals(10, vertex.getEdgeCount());
+    Graph graph = null;
+    Vertex vertex = null;
+    try {
+      graph = HBaseGraphFactory.open(conf);
+      vertex = graph.getVertex(firstVertex);
     
-    Iterable<com.tinkerpop.blueprints.Edge> edges = vertex.getEdges();
-    for(com.tinkerpop.blueprints.Edge edge : edges) {
-      vertex = (Vertex) edge.getVertex(Direction.OUT);
       assertNotNull(vertex);
       assertEquals(10, vertex.getEdgeCount());
-    }
     
-    try{} finally {
+      Iterable<com.tinkerpop.blueprints.Edge> edges = vertex.getEdges();
+      for(com.tinkerpop.blueprints.Edge edge : edges) {
+        vertex = (Vertex) edge.getVertex(Direction.OUT);
+        assertNotNull(vertex);
+        assertEquals(10, vertex.getEdgeCount());
+      }
+    
+    } finally {
       if(null != graph) graph.shutdown();
     }
   }
