@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
@@ -28,19 +29,26 @@ import com.trend.blueprints.test.AbstractHBaseMiniClusterTest;
 
 public class GenerateTestDataTest extends AbstractHBaseMiniClusterTest {
   
-  private static String firstVertex;
+  private static final String TEST_EDGE_500 = "test.edge.500";
+  private static final String TEST_VERTEX_500 = "test.vertex.500";
+  
+  private static final String TEST_EDGE_100 = "test.edge.100";
+  private static final String TEST_VERTEX_100 = "test.vertex.100";
   
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     AbstractHBaseMiniClusterTest.setUpBeforeClass();
     Configuration conf = TEST_UTIL.getConfiguration();
-    createTable(conf, Bytes.toBytes("test.vertex"), 
+    
+    createTable(conf, Bytes.toBytes(TEST_VERTEX_500), 
         transfer2BytesArray(new String[] {"property"}));
-    createTable(conf, Bytes.toBytes("test.edge"), 
+    createTable(conf, Bytes.toBytes(TEST_EDGE_500), 
         transfer2BytesArray(new String[] {"property"}));
     
-    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, "test.vertex");
-    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, "test.edge");
+    createTable(conf, Bytes.toBytes(TEST_VERTEX_100), 
+        transfer2BytesArray(new String[] {"property"}));
+    createTable(conf, Bytes.toBytes(TEST_EDGE_100), 
+        transfer2BytesArray(new String[] {"property"}));
   }
 
   @AfterClass
@@ -59,6 +67,9 @@ public class GenerateTestDataTest extends AbstractHBaseMiniClusterTest {
   @Test @Ignore // enable it if you want to see usage print
   public void testMain_printUsage() throws Exception {
     Configuration conf = TEST_UTIL.getConfiguration();
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, TEST_VERTEX_500);
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, TEST_EDGE_500);
+    
     GenerateTestData genTestData = new GenerateTestData();
     genTestData.setConf(conf);
     genTestData.run(new String[] {"-h"});
@@ -67,21 +78,22 @@ public class GenerateTestDataTest extends AbstractHBaseMiniClusterTest {
   @Test
   public void testRun_vertexCount_500() throws Exception {
     Configuration conf = TEST_UTIL.getConfiguration();
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, TEST_VERTEX_500);
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, TEST_EDGE_500);
     
     GenerateTestData genTestData = new GenerateTestData();
     genTestData.setConf(conf);
-    genTestData.run(new String[] {"-v", "500", "test.vertex", "test.edge"});
+    genTestData.run(new String[] {"-v", "500", TEST_VERTEX_500, TEST_EDGE_500});
     
-    assertCount(conf, "test.vertex", 500);
-    assertCount(conf, "test.edge", 499);
+    assertCount(conf, TEST_VERTEX_500, 500);
+    assertCount(conf, TEST_EDGE_500, 499);
     
-    firstVertex = genTestData.getFirstVertex();
+    List<String> firstVertex = genTestData.getFirstVertices();
+    assertEquals(1, firstVertex.size());
+    testGraphIntegrity_500(conf, firstVertex.get(0));
   }
   
-  @Test
-  public void testGraphIntegrity() {
-    assertNotNull(firstVertex);
-    Configuration conf = TEST_UTIL.getConfiguration();
+  private static void testGraphIntegrity_500(Configuration conf, String firstVertex) {
     Graph graph = null;
     Vertex vertex = null;
     try {
@@ -98,6 +110,44 @@ public class GenerateTestDataTest extends AbstractHBaseMiniClusterTest {
         assertEquals(10, vertex.getEdgeCount());
       }
     
+    } finally {
+      if(null != graph) graph.shutdown();
+    }
+  }
+  
+  @Test
+  public void testRun_vertexCount_100() throws Exception {
+    Configuration conf = TEST_UTIL.getConfiguration();
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, TEST_VERTEX_100);
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, TEST_EDGE_100);
+    
+    GenerateTestData genTestData = new GenerateTestData();
+    genTestData.setConf(conf);
+    genTestData.run(new String[] {
+        "-v", "100", "-d", "-ev", "1,2,3,4,5", "-p", "0.2,0.2,0.2,0.2,0.2", 
+        TEST_VERTEX_100, TEST_EDGE_100});
+    
+    assertCount(conf, TEST_VERTEX_100, 100);
+    assertCount(conf, TEST_EDGE_100, 99);
+    
+    List<String> firstVertices = genTestData.getFirstVertices();
+    assertEquals(5, firstVertices.size());
+    testGraphIntegrity_100(conf, firstVertices);
+  }
+  
+  private static void testGraphIntegrity_100(Configuration conf, List<String> firstVertices) {
+    Graph graph = null;
+    Vertex vertex = null;
+    String vertexId = null;
+    try {
+      graph = HBaseGraphFactory.open(conf);
+      for(int a = 0; a < firstVertices.size(); a++) {
+        vertexId = firstVertices.get(a);
+        vertex = graph.getVertex(vertexId);
+      
+        assertNotNull(vertex);
+        assertEquals((a + 1), vertex.getEdgeCount());
+      }
     } finally {
       if(null != graph) graph.shutdown();
     }

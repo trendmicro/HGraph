@@ -2,6 +2,8 @@ package com.trend.blueprints.util.test;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -15,7 +17,6 @@ import com.trend.blueprints.test.AbstractHBaseMiniClusterTest;
 
 public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
   
-  private static String startVertexId = null;
   
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -29,11 +30,6 @@ public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
     conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, "test.vertex");
     conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, "test.edge");
     
-    // initial test data
-    GenerateTestData genTestData = new GenerateTestData();
-    genTestData.setConf(conf);
-    genTestData.run(new String[] {"-v", "500", "test.vertex", "test.edge"});
-    startVertexId = genTestData.getFirstVertex();
   }
 
   @AfterClass
@@ -51,9 +47,18 @@ public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
 
   @Test
   public void testRun() throws Exception {
+    // initial test data
+    Configuration conf = TEST_UTIL.getConfiguration();
+    GenerateTestData genTestData = new GenerateTestData();
+    genTestData.setConf(conf);
+    genTestData.run(new String[] {"-v", "500", "test.vertex", "test.edge"});
+    
+    List<String> firstVertices = genTestData.getFirstVertices();
+    assertEquals(1, firstVertices.size());
+    
     GetGeneratedGraphData getData = new GetGeneratedGraphData();
-    getData.setConf(TEST_UTIL.getConfiguration());
-    getData.run(new String[] {"-i", startVertexId, "test.vertex", "test.edge"});
+    getData.setConf(conf);
+    getData.run(new String[] {"-i", firstVertices.get(0), "test.vertex", "test.edge"});
   }
 
 }

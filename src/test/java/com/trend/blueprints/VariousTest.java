@@ -13,6 +13,8 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import cern.colt.Arrays;
+
 public class VariousTest {
 
   @BeforeClass
@@ -89,5 +91,23 @@ public class VariousTest {
     
     System.out.println("timer.toString=" + timer.toString());
     
+  }
+  @Test
+  public void testBigDecimal() {
+    int a = 10000;
+    float b = 0.2F;
+    BigDecimal ba = null;
+    BigDecimal bb = null;
+    
+    ba = new BigDecimal(a);
+    bb = new BigDecimal(b);
+    
+    System.out.println(ba.multiply(bb).intValue());
+  }
+  
+  @Test
+  public void testBooleanArrayInitial() {
+    boolean[] test = new boolean[5];
+    System.out.println(Arrays.toString(test));
   }
 }
