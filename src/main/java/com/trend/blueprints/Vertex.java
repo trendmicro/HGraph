@@ -120,15 +120,5 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
     return this.edges.size();
   }
   
-  /* (non-Javadoc)
-   * @see com.trend.blueprints.AbstractElement#toString()
-   */
-  @Override
-  public String toString() {
-    return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).
-        appendSuper(super.toString()).
-        append("edges", edges).
-        toString();
-  }
 
 }

@@ -117,20 +117,16 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     HTableInterface table = this.POOL.getTable(EDGE_TABLE_NAME);
     Scan scan = new Scan();
     ResultScanner rs = null;
-    List<com.tinkerpop.blueprints.Edge> edges = new ArrayList<com.tinkerpop.blueprints.Edge>();
     
     try {
       rs = table.getScanner(scan);
-      for(Result r : rs) {
-        edges.add(new Edge(r, this));
-      }
     } catch (IOException e) {
       LOG.error("getEdges failed", e);
+      if(table != null)
+        this.POOL.putTable(table);
       throw new RuntimeException(e);
-    } finally {
-      this.POOL.putTable(table);
     }
-    return edges;
+    return new EdgeIterable(table, rs, this);
   }
 
   /* (non-Javadoc)
@@ -138,16 +134,15 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    */
   @Override
   public Iterable<com.tinkerpop.blueprints.Edge> getEdges(String key, Object value) {
-    List<com.tinkerpop.blueprints.Edge> edges = new ArrayList<com.tinkerpop.blueprints.Edge>();
-    
-    collectElements(key, value, 
-        new CollectElementStrategy<com.tinkerpop.blueprints.Edge>(this.EDGE_TABLE_NAME, edges) {
-          @Override
-          com.tinkerpop.blueprints.Edge newElement(Result r, Graph graph) {
-            return new Edge(r, graph);
-          }
-    });
-    return edges;
+    CollectElementStrategy<com.tinkerpop.blueprints.Edge> strategy =
+      new CollectElementStrategy<com.tinkerpop.blueprints.Edge>(this.EDGE_TABLE_NAME) {
+        @Override
+        void newIterable(HTableInterface table, ResultScanner rs, Graph graph) {
+          this.setIterable(new EdgeIterable(table, rs, graph));
+        }
+    };
+    collectElements(key, value, strategy);
+    return strategy.getIterable();
   }
 
   /* (non-Javadoc)
@@ -226,39 +221,45 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    */
   @Override
   public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(String key, Object value) {
-    List<com.tinkerpop.blueprints.Vertex> vertices = new ArrayList<com.tinkerpop.blueprints.Vertex>();
-    
-    collectElements(key, value, 
-        new CollectElementStrategy<com.tinkerpop.blueprints.Vertex>(this.VERTEX_TABLE_NAME, vertices) {
+    CollectElementStrategy<com.tinkerpop.blueprints.Vertex> strategy = 
+        new CollectElementStrategy<com.tinkerpop.blueprints.Vertex>(this.VERTEX_TABLE_NAME) {
           @Override
-          com.tinkerpop.blueprints.Vertex newElement(Result r, Graph graph) {
-            return getVertex(r, graph);
+          void newIterable(HTableInterface table, ResultScanner rs, Graph graph) {
+            this.setIterable(new VertexIterable(table, rs, graph));
           }
-    });
-    return vertices;
+    };
+    return strategy.getIterable();
   }
   
   private static abstract class CollectElementStrategy <T extends com.tinkerpop.blueprints.Element> {
     private String tableName;
-    private List<T> elements;
+    private Iterable<T> iterable;
     /**
      * @param tableName
-     * @param elements
      */
-    CollectElementStrategy(String tableName, List<T> elements) {
+    CollectElementStrategy(String tableName) {
       super();
       this.tableName = tableName;
-      this.elements = elements;
     }
     
-    abstract T newElement(Result r, Graph graph);
+    abstract void newIterable(HTableInterface table, ResultScanner rs, Graph graph);
     
     String getTableName() {
       return this.tableName;
     }
-    
-    void addElement(T element) {
-      this.elements.add(element);
+
+    /**
+     * @return the iterable
+     */
+    Iterable<T> getIterable() {
+      return iterable;
+    }
+
+    /**
+     * @param iterable the iterable to set
+     */
+    void setIterable(Iterable<T> iterable) {
+      this.iterable = iterable;
     }
     
   }
@@ -283,11 +284,11 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     scan.setFilter(filter);
     try {
       ResultScanner rs = table.getScanner(scan);
-      for(Result r : rs) {
-        strategy.addElement(strategy.newElement(r, this));
-      }
+      strategy.newIterable(table, rs, this);
     } catch (IOException e) {
       LOG.error("getScanner failed", e);
+      if(table != null)
+        this.POOL.putTable(table);
       throw new RuntimeException(e);
     }
   }
@@ -335,14 +336,22 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
       try {
         this.POOL.closeTablePool(this.VERTEX_TABLE_NAME);
       } catch(Exception e3) {
-        LOG.error("pool.close " + this.VERTEX_TABLE_NAME + " failed", e3);
+        LOG.warn("pool.close " + this.VERTEX_TABLE_NAME + " failed", e3);
       }
       try {
         this.POOL.closeTablePool(this.EDGE_TABLE_NAME);
       } catch(Exception e3) {
-        LOG.error("pool.close " + this.EDGE_TABLE_NAME + " failed", e3);
+        LOG.warn("pool.close " + this.EDGE_TABLE_NAME + " failed", e3);
       }
     }
+  }
+  
+  /**
+   * client code return their resource back to <code>Graph</code>
+   * @param table
+   */
+  protected void returnTable(HTableInterface table) {
+    this.POOL.putTable(table);
   }
 
 }
