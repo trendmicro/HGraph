@@ -238,7 +238,7 @@ public class GenerateTestData extends Configured implements Tool {
       this.isFirstVertices = new boolean[this.edgeCountForVertices.length];
       
       LOG.info("-d, -ev:" + Arrays.toString(this.edgeCountForVertices) + ", -p:" +
-          this.distPercs + ", vertex-table-name:" + this.vertexTable + 
+          Arrays.toString(this.distPercs) + ", vertex-table-name:" + this.vertexTable + 
           ", edge-table-name:" + this.edgeTable);
     } else {
       LOG.info("-v:" + this.vertexCount + ", -e:" + this.edgeCountPerVertex + 
@@ -290,7 +290,6 @@ public class GenerateTestData extends Configured implements Tool {
         parentVertexKeysQueue.offer(put.getRow());
         
         if(rowCount > 0) {
-          //FIXME mod not works here
           vIdx = rowCount % tmpEdgeCountPerVertex;
           if(vIdx == 0) {
             parentVertexKey = parentVertexKeysQueue.poll();
@@ -329,8 +328,8 @@ public class GenerateTestData extends Configured implements Tool {
       if(null != vertexTable) vertexTable.close();
       if(null != edgeTable) edgeTable.close();
       timer.stop();
-      LOG.info("Time elapsed:" + timer.toString() + " for pushing " + 
-          this.vertexCount + " vertices test data to HBase");
+      LOG.info("Time elapsed:" + timer.toString() + ", " + timer.getTime() + 
+          " for pushing " + this.vertexCount + " vertices test data to HBase");
       LOG.info("first vertices id:" + this.firstVertices);
     }
   }
@@ -414,11 +413,11 @@ public class GenerateTestData extends Configured implements Tool {
     System.err.println("-d enable normal-distribution mode");
     System.err.println("-ev edge-count-for-vertices, specify edge" + 
         " count for each category of given vertex, delimitered by ','");
-    System.err.println("  it is opposite with edge-count-per-vertex");
-    System.err.println("  default vaule:" + Arrays.toString(DEFAULT_EDGE_COUNT_FOR_VERTICES));
+    System.err.println("    it is opposite with edge-count-per-vertex");
+    System.err.println("    default vaule:" + Arrays.toString(DEFAULT_EDGE_COUNT_FOR_VERTICES));
     System.err.println("-p distribution-percentages, specify percentages" + 
         " of vertices will have edge count, delimitered by ','");
-    System.err.println("  default value:" + Arrays.toString(DEFAULT_DIST_PERCS));
+    System.err.println("    default value:" + Arrays.toString(DEFAULT_DIST_PERCS));
     System.exit(1);
   }
 

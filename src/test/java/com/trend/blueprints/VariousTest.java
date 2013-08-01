@@ -110,4 +110,13 @@ public class VariousTest {
     boolean[] test = new boolean[5];
     System.out.println(Arrays.toString(test));
   }
+  
+  @Test
+  public void testStringSplit() {
+    String str1 = "1,2,3";
+    assertArrayEquals(new String[]{"1", "2", "3"}, str1.split(","));
+    
+    String str2 = "1";
+    assertArrayEquals(new String[]{"1"}, str2.split(","));
+  }
 }

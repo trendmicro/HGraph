@@ -47,7 +47,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
   private int levelToTraverse = DEFAULT_LEVEL_TO_TRAVERSE;
   private String vertexTableName = null;
   private String edgeTableName = null;
-  private String startVertexId = null;
+  private String[] startVertexIds = null;
   
   
   @Override
@@ -92,7 +92,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
             printUsageAndExit();
           }
           
-          this.startVertexId = args[i];
+          this.startVertexIds = args[i].split(",");
         }
         
       } else if (countIndex < 0) {
@@ -115,18 +115,18 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, this.edgeTableName);
     
     // if user not specify start-vertex-id, random choose one
-    if(null == this.startVertexId || this.startVertexId.isEmpty()) {
-      this.startVertexId = this.getSampleDataRowKey();
+    if(null == this.startVertexIds || this.startVertexIds.length == 0) {
+      this.startVertexIds = this.getSampleDataRowKey();
     }
     
-    LOG.info("-l:" + this.levelToTraverse + ", -i:" + this.startVertexId + 
+    LOG.info("-l:" + this.levelToTraverse + ", -i:" + Arrays.toString(this.startVertexIds) + 
         ", vertex-table-name:" + this.vertexTableName + ", edge-table-name:" + this.edgeTableName);
     
-    this.doGetGeneratedGraphData(this.startVertexId);
+    this.doGetGeneratedGraphData(this.startVertexIds);
     return 0;
   }
   
-  private String getSampleDataRowKey() throws IOException {
+  private String[] getSampleDataRowKey() throws IOException {
     String rowKey = null;
     HTable table = null;
     ResultScanner rs = null;
@@ -146,62 +146,67 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       if(null != rs) rs.close();
       if(null != table) table.close();
     }
-    return rowKey;
+    return new String[] {rowKey};
   }
   
-  private void doGetGeneratedGraphData(String rowKey) {
-    LOG.info("Sample Graph Vertex:" + rowKey);
+  private void doGetGeneratedGraphData(String[] rowKeys) {
+    LOG.info("Sample Graph Vertex:" + Arrays.toString(rowKeys));
     StopWatch timer = new StopWatch();
     Graph graph = null;
     Vertex vertex = null;
-    Iterable<Vertex> vertices = null;
-    Iterable<Edge> edges = null;
+    List<Vertex> curVertices = null;
+    List<Vertex> subVertices = null;
+    Iterable<Edge> subEdges = null;
     int level = 0;
     long totalVertexCount = 0;
     
     try {
       timer.start();
       graph = HBaseGraphFactory.open(this.getConf());
-      while(level < this.levelToTraverse) {
-        level++;
-        LOG.info("***HEAD:level:" + level + " output***");
-        if(level == 1) {
-          vertex = graph.getVertex(rowKey);
-          vertices = Arrays.asList(vertex);
-          LOG.info("vertices count:" + 1);
-          totalVertexCount = 1;
-        } else {
-          List<Vertex> subVertices = new ArrayList<Vertex>();
-          for(Iterator<Vertex> verticesIt = vertices.iterator(); 
-              verticesIt.hasNext();) {
-            vertex = verticesIt.next();
-            edges = ((com.trend.blueprints.Vertex)vertex).getEdges();
-            for(Edge edge : edges) {
+      for(String rowKey : rowKeys) {
+        LOG.info("***HEAD:Start to process rowKey:" + rowKey + "***");
+        vertex = graph.getVertex(rowKey);
+        curVertices = Arrays.asList(vertex);
+        totalVertexCount += curVertices.size();
+        level = 0;
+        while(level < this.levelToTraverse) {
+          level++;
+          LOG.info("***HEAD:level:" + level + "***");
+          subVertices = new ArrayList<Vertex>();
+          for(Vertex tmpVertex : curVertices) {
+            LOG.info("processing vertex:" + tmpVertex.getId());
+            tmpVertex.getPropertyKeys();
+            subEdges = ((com.trend.blueprints.Vertex)vertex).getEdges();
+            for(Edge edge : subEdges) {
+              LOG.info("processing edge:" + edge.getId());
+              edge.getPropertyKeys();
               subVertices.add(edge.getVertex(Direction.OUT));
             }
           }
-          LOG.info("vertices count:" + subVertices.size());
-          totalVertexCount += subVertices.size();
-          vertices = subVertices;
+          curVertices = null;
+          if(subVertices.size() == 0) {
+            LOG.info("reach last level:" + level);
+            break;
+          }
+          curVertices = subVertices;
+          totalVertexCount += curVertices.size();
         }
-      
-        LOG.info(vertices.toString());
-        LOG.info("***TAIL:level:" + level + " output***");
+        LOG.info("***TAIL:Stop to process rowKey:" + rowKey + "***");
       }
       timer.stop();
-      LOG.info("Time elapsed:" + timer.toString() + " for getting " + 
+      LOG.info("Time elapsed:" + timer.toString() + ", " + timer.getTime() +  " for getting " + 
           totalVertexCount + " of vertices");
-    
     } finally {
       graph.shutdown();
     }
   }
   
   private static void printUsageAndExit() {
-    System.out.print(GetGeneratedGraphData.class.getSimpleName() + " Usage:");
-    System.out.println(" [-l level-to-traverse] [-i start-vertex-id] <vertex-table-name> <edge-table-name>");
-    System.out.println("-l level-to-traverse default value:" + DEFAULT_LEVEL_TO_TRAVERSE);
-    System.out.println("-i start-vertex-id user can specify what vertex-id to start");
+    System.err.print(GetGeneratedGraphData.class.getSimpleName() + " Usage:");
+    System.err.println(" [-l level-to-traverse] [-i start-vertex-ids] <vertex-table-name> <edge-table-name>");
+    System.err.println("-l level-to-traverse default value:" + DEFAULT_LEVEL_TO_TRAVERSE);
+    System.err.println("-i start-vertex-ids user can specify what vertex-ids to start, delimitered by ','");
+    System.err.println("    randomly select one vertex-id if not specified");
     System.exit(1);
   }
   
