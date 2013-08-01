@@ -151,7 +151,8 @@ public class GetGeneratedGraphData extends Configured implements Tool {
   
   private void doGetGeneratedGraphData(String[] rowKeys) {
     LOG.info("Sample Graph Vertex:" + Arrays.toString(rowKeys));
-    StopWatch timer = new StopWatch();
+    StopWatch timerAll = new StopWatch();
+    StopWatch timerRowKey = null;
     Graph graph = null;
     Vertex vertex = null;
     List<Vertex> curVertices = null;
@@ -159,19 +160,23 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     Iterable<Edge> subEdges = null;
     int level = 0;
     long totalVertexCount = 0;
+    long perVertexCount = 0;
     
     try {
-      timer.start();
+      timerAll.start();
       graph = HBaseGraphFactory.open(this.getConf());
       for(String rowKey : rowKeys) {
         LOG.info("***HEAD:Start to process rowKey:" + rowKey + "***");
+        timerRowKey = new StopWatch();
+        timerRowKey.start();
         vertex = graph.getVertex(rowKey);
         curVertices = Arrays.asList(vertex);
-        totalVertexCount += curVertices.size();
-        level = 0;
+        perVertexCount = 0; level = 0;
         while(level < this.levelToTraverse) {
           level++;
           LOG.info("***HEAD:level:" + level + "***");
+          totalVertexCount += curVertices.size();
+          perVertexCount += curVertices.size();
           subVertices = new ArrayList<Vertex>();
           for(Vertex tmpVertex : curVertices) {
             LOG.info("processing vertex:" + tmpVertex.getId());
@@ -189,12 +194,14 @@ public class GetGeneratedGraphData extends Configured implements Tool {
             break;
           }
           curVertices = subVertices;
-          totalVertexCount += curVertices.size();
         }
+        timerRowKey.stop();
+        LOG.info("Time elapsed:" + timerRowKey.toString() + ", " + timerRowKey.getTime() +  " for processing rowKey:" + 
+            rowKey + " for " + perVertexCount + " of vertices");
         LOG.info("***TAIL:Stop to process rowKey:" + rowKey + "***");
       }
-      timer.stop();
-      LOG.info("Time elapsed:" + timer.toString() + ", " + timer.getTime() +  " for getting " + 
+      timerAll.stop();
+      LOG.info("Time elapsed:" + timerAll.toString() + ", " + timerAll.getTime() +  " for getting " + 
           totalVertexCount + " of vertices");
     } finally {
       graph.shutdown();
