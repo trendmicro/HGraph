@@ -6,7 +6,6 @@ package com.trend.blueprints.util.test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang.time.StopWatch;
@@ -114,31 +113,32 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     this.edgeTableName = args[countIndex + 1];
     conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, this.edgeTableName);
     
-    // if user not specify start-vertex-id, random choose one
-    if(null == this.startVertexIds || this.startVertexIds.length == 0) {
-      this.startVertexIds = this.getSampleDataRowKey();
-    }
-    
     LOG.info("-l:" + this.levelToTraverse + ", -i:" + Arrays.toString(this.startVertexIds) + 
         ", vertex-table-name:" + this.vertexTableName + ", edge-table-name:" + this.edgeTableName);
+    
+    // if user not specify start-vertex-id, select all
+    if(null == this.startVertexIds || this.startVertexIds.length == 0) {
+      this.startVertexIds = this.getAllDataRowKeys();
+    }
     
     this.doGetGeneratedGraphData(this.startVertexIds);
     return 0;
   }
   
-  private String[] getSampleDataRowKey() throws IOException {
-    String rowKey = null;
+  private String[] getAllDataRowKeys() throws IOException {
+    List<String> rowKeys = new ArrayList<String>();
     HTable table = null;
     ResultScanner rs = null;
+    
     try {
       table = new HTable(this.getConf(), this.vertexTableName);
     
       Scan scan = new Scan();
       scan.setFilter(new FirstKeyOnlyFilter());
       rs = table.getScanner(scan);
-      Result r = rs.next();
-      if(null == r) throw new IllegalStateException("No sample data row key found !!");
-      rowKey = Bytes.toString(r.getRow());
+      for(Result r : rs) {
+        rowKeys.add(Bytes.toString(r.getRow()));
+      }
     } catch (IOException e) {
       LOG.error("getSampleDataRowKey failed", e);
       throw e;
@@ -146,7 +146,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       if(null != rs) rs.close();
       if(null != table) table.close();
     }
-    return new String[] {rowKey};
+    return rowKeys.toArray(new String[]{});
   }
   
   private void doGetGeneratedGraphData(String[] rowKeys) {
@@ -213,7 +213,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     System.err.println(" [-l level-to-traverse] [-i start-vertex-ids] <vertex-table-name> <edge-table-name>");
     System.err.println("-l level-to-traverse default value:" + DEFAULT_LEVEL_TO_TRAVERSE);
     System.err.println("-i start-vertex-ids user can specify what vertex-ids to start, delimitered by ','");
-    System.err.println("    randomly select one vertex-id if not specified");
+    System.err.println("    get all vertex-ids if not specified");
     System.exit(1);
   }
   

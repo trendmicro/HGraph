@@ -24,6 +24,9 @@ public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
   private static final String TEST_EDGE_2 = "test.edge.2";
   private static final String TEST_VERTEX_2 = "test.vertex.2";
   
+  private static final String TEST_EDGE_3 = "test.edge.3";
+  private static final String TEST_VERTEX_3 = "test.vertex.3";
+  
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     AbstractHBaseMiniClusterTest.setUpBeforeClass();
@@ -38,6 +41,10 @@ public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
     createTable(conf, Bytes.toBytes(TEST_EDGE_2), 
         transfer2BytesArray(new String[] {"property"}));
     
+    createTable(conf, Bytes.toBytes(TEST_VERTEX_3), 
+        transfer2BytesArray(new String[] {"property"}));
+    createTable(conf, Bytes.toBytes(TEST_EDGE_3), 
+        transfer2BytesArray(new String[] {"property"}));
   }
 
   @AfterClass
@@ -102,5 +109,21 @@ public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
     getData.run(new String[] {"-i", sb.toString(), TEST_VERTEX_2, TEST_EDGE_2});
     
   }
-
+  
+  @Test
+  public void testRun_3() throws Exception {
+    // initial test data
+    Configuration conf = TEST_UTIL.getConfiguration();
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, TEST_VERTEX_3);
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, TEST_EDGE_3);
+    
+    GenerateTestData genTestData = new GenerateTestData();
+    genTestData.setConf(conf);
+    genTestData.run(new String[] {"-v", "50", TEST_VERTEX_3, TEST_EDGE_3});
+    
+    GetGeneratedGraphData getData = new GetGeneratedGraphData();
+    getData.setConf(conf);
+    getData.run(new String[] {TEST_VERTEX_3, TEST_EDGE_3});
+    
+  }
 }

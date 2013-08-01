@@ -119,4 +119,13 @@ public class VariousTest {
     String str2 = "1";
     assertArrayEquals(new String[]{"1"}, str2.split(","));
   }
+  @Test
+  public void testCopyArray() {
+    String[] src = {"a", "b", "c"};
+    String[] dest = new String[2];
+    System.arraycopy(src, 1, dest, 0, 2);
+    assertArrayEquals(new String[]{"b", "c"}, dest);
+    
+    
+  }
 }
