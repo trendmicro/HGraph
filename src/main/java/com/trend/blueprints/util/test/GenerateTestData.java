@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
+import java.util.Arrays;
 
 import javax.activation.UnsupportedDataTypeException;
 
@@ -28,8 +29,6 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import cern.colt.Arrays;
 
 import com.trend.blueprints.HBaseGraphConstants;
 import com.trend.blueprints.Properties;
