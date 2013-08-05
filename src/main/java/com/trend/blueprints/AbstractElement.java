@@ -44,6 +44,7 @@ public abstract class AbstractElement implements Element {
   
   private void extractValues(Result r) {
     this.id = Bytes.toString(r.getRow());
+    if(r.value().length == 0) return;
     try {
       this.properties.addProperty(r);
     } catch (UnsupportedDataTypeException e) {

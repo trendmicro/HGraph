@@ -52,14 +52,7 @@ public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
 
       @Override
       public com.tinkerpop.blueprints.Edge next() {
-        Edge edge = null;
-        try {
-          edge = new Edge(rs.next(), graph);
-        } catch (IOException e) {
-          LOG.error("initial edge failed", e);
-          throw new RuntimeException(e);
-        }
-        return edge;
+        return new Edge(r.next(), graph);
       }
 
       @Override

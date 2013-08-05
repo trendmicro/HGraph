@@ -3,12 +3,6 @@
  */
 package com.trend.blueprints;
 
-import java.util.Set;
-import java.util.HashSet;
-
-import org.apache.commons.lang.Validate;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import org.apache.hadoop.hbase.client.Result;
 
 import com.tinkerpop.blueprints.Direction;
@@ -21,22 +15,12 @@ import com.tinkerpop.blueprints.VertexQuery;
  */
 public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.Vertex {
   
-  private Set<Edge> edges = null;
-  
   /**
    * @param result
    * @param graph
    */
   protected Vertex(Result result, Graph graph) {
     super(result, graph);
-  }
-
-  /**
-   * @param edges the edges to set
-   */
-  protected void setEdges(Set<Edge> edges) {
-    Validate.notNull(edges, "edges shall always not be null");
-    this.edges = edges;
   }
 
   /* (non-Javadoc)
@@ -53,12 +37,7 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
    * @return the edges
    */
   public Iterable<com.tinkerpop.blueprints.Edge> getEdges() {
-    Set<com.tinkerpop.blueprints.Edge> edges = new HashSet<com.tinkerpop.blueprints.Edge>();
-    //FIXME another way to skip this loop ?
-    for(Edge edge : this.edges) {
-      edges.add(edge);
-    }
-    return edges;
+    return this.getGraph().getEdges(this);
   }
 
   /* (non-Javadoc)
@@ -67,17 +46,10 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
   @Override
   public Iterable<com.tinkerpop.blueprints.Edge> getEdges(Direction direction, String... labels) {
     if(null == direction || null == labels || labels.length == 0) return null;
-    Set<com.tinkerpop.blueprints.Edge> edges = new HashSet<com.tinkerpop.blueprints.Edge>();
+    Iterable<com.tinkerpop.blueprints.Edge> edges = null;
     switch(direction) {
     case OUT:
-      for(Edge edge : this.edges) {
-        for(String label : labels) {
-          if(edge.getLabel().equals(label)) {
-            edges.add(edge);
-            break;
-          }
-        }
-      }
+      edges = this.getGraph().getEdges(this, labels);
       break;
     default:
       throw new RuntimeException("direction:" + direction + " is not supported");
@@ -92,15 +64,7 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
   @Override
   public Iterable<com.tinkerpop.blueprints.Vertex> getVertices(Direction direction,
       String... labels) {
-    Iterable<com.tinkerpop.blueprints.Edge> edges = this.getEdges(direction, labels);
-    if(null == edges) return null;
-    Set<com.tinkerpop.blueprints.Vertex> vertices = 
-        new HashSet<com.tinkerpop.blueprints.Vertex>();
-    
-    for(com.tinkerpop.blueprints.Edge edge : edges) {
-      vertices.add(edge.getVertex(direction));
-    }
-    return vertices;
+    throw new UnsupportedOperationException("Due to memory usage consideration pls use getEdges instead");
   }
 
   /* (non-Javadoc)
@@ -117,7 +81,7 @@ public class Vertex extends AbstractElement implements com.tinkerpop.blueprints.
    * @return
    */
   public long getEdgeCount() {
-    return this.edges.size();
+    return this.getGraph().getEdgeCount(this);
   }
   
 

@@ -80,7 +80,7 @@ public class VertexTest extends AbstractHBaseGraphTest {
     assertEquals(3, vertex.getEdgeCount());
   }
 
-  @Test
+  @Test(expected=UnsupportedOperationException.class)
   public void testGetVerticesDirectionOutStringArray() {
     Vertex vertex = this.graph.getVertex("40012");
     System.out.println("vertex=" + vertex);

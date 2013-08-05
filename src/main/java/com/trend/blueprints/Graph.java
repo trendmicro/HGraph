@@ -4,10 +4,7 @@
 package com.trend.blueprints;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.Iterator;
 
 import javax.activation.UnsupportedDataTypeException;
 
@@ -20,6 +17,10 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -128,6 +129,87 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     }
     return new EdgeIterable(table, rs, this);
   }
+  
+  protected Iterable<com.tinkerpop.blueprints.Edge> getEdges(final Vertex vertex) {
+    Validate.notNull(vertex, "vertex shall always not be null");
+    EdgeIterable edgeIt = getEdgeIterable(vertex, new GenScanStrategy() {
+      @Override
+      public Scan getScan() {
+        Scan scan = new Scan();
+        scan.setStartRow(Bytes.toBytes(vertex.getId() + HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1));
+        scan.setStopRow(Bytes.toBytes(vertex.getId() + "~"));
+        return scan;
+      }
+    });
+    
+    return edgeIt;
+  }
+
+  private EdgeIterable getEdgeIterable(Vertex vertex, GenScanStrategy strategy) {
+    HTableInterface table = this.POOL.getTable(EDGE_TABLE_NAME);
+    Scan scan = strategy.getScan();
+    ResultScanner rs = null;
+    EdgeIterable edgeIt = null;
+    
+    try {
+      rs = table.getScanner(scan);
+    } catch (IOException e) {
+      LOG.error("getEdges with vertex:" + vertex + " failed", e);
+      if(null != table)
+        this.POOL.putTable(table);
+      throw new RuntimeException(e);
+    }
+    edgeIt = new EdgeIterable(table, rs, this);
+    return edgeIt;
+  }
+  
+  private static interface GenScanStrategy {
+    Scan getScan();
+  }
+  
+  protected Iterable<com.tinkerpop.blueprints.Edge> getEdges(final Vertex vertex, final String... labels) {
+    Validate.notNull(vertex, "vertex shall always not be null");
+    Validate.notEmpty(labels, "labels shall always not be null or empty");
+    EdgeIterable edgeIt = getEdgeIterable(vertex, new GenScanStrategy() {
+      @Override
+      public Scan getScan() {
+        String id = (String) vertex.getId();
+        Scan scan = new Scan();
+        Filter filter = null;
+        FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+        for(String label : labels) {
+          filter = new PrefixFilter(Bytes.toBytes(id + 
+                  HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1 + label));
+          filters.addFilter(filter);
+        }
+        scan.setFilter(filters);
+        return scan;
+      }
+    });
+    return edgeIt;
+  }
+  
+  protected long getEdgeCount(final Vertex vertex) {
+    long count = 0;
+    Validate.notNull(vertex, "vertex shall always not be null");
+    EdgeIterable edgeIt = getEdgeIterable(vertex, new GenScanStrategy() {
+      @Override
+      public Scan getScan() {
+        Scan scan = new Scan();
+        scan.setStartRow(Bytes.toBytes(vertex.getId() + HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1));
+        scan.setStopRow(Bytes.toBytes(vertex.getId() + "~"));
+        scan.setFilter(new KeyOnlyFilter());
+        return scan;
+      }
+    });
+    
+    Iterator<com.tinkerpop.blueprints.Edge> edgeIte = edgeIt.iterator();
+    while(edgeIte.hasNext()) {
+      edgeIte.next();
+      count++;
+    }
+    return count;
+  }
 
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getEdges(java.lang.String, java.lang.Object)
@@ -164,34 +246,10 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     Result r = getResult(id, this.VERTEX_TABLE_NAME);
     if(r.isEmpty()) return null;
     
-    Vertex vertex = this.getVertex(r, this);
+    Vertex vertex = new Vertex(r, this);
     return vertex;
   }
   
-  private Vertex getVertex(Result r, Graph graph) {
-    Vertex vertex = new Vertex(r, graph);
-    Set<Edge> edges = new HashSet<Edge>();
-    HTableInterface table = this.POOL.getTable(EDGE_TABLE_NAME);
-    Scan scan = new Scan();
-    scan.setStartRow(Bytes.toBytes(vertex.getId() + HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1));
-    scan.setStopRow(Bytes.toBytes(vertex.getId() + "~"));
-    ResultScanner rs;
-    try {
-      rs = table.getScanner(scan);
-      for(Result r1 : rs) {
-        edges.add(new Edge(r1, graph));
-      }
-    } catch (IOException e) {
-      LOG.error("egdse.add failed", e);
-      throw new RuntimeException(e);
-    } finally {
-      this.POOL.putTable(table);
-    }
-    vertex.setEdges(edges);
-    
-    return vertex;
-  }
-
   /* (non-Javadoc)
    * @see com.tinkerpop.blueprints.Graph#getVertices()
    */
@@ -200,20 +258,17 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     HTableInterface table = this.POOL.getTable(VERTEX_TABLE_NAME);
     Scan scan = new Scan();
     ResultScanner rs = null;
-    List<com.tinkerpop.blueprints.Vertex> vertices = new ArrayList<com.tinkerpop.blueprints.Vertex>();
-    
-    try {
-      rs = table.getScanner(scan);
-      for(Result r : rs) {
-        vertices.add(this.getVertex(r, this));
+    VertexIterable vertexIt = null;
+      try {
+        rs = table.getScanner(scan);
+      } catch (IOException e) {
+        LOG.error("getVertices failed", e);
+        if(null != table)
+          this.POOL.putTable(table);
+        throw new RuntimeException(e);
       }
-    } catch (IOException e) {
-      LOG.error("getVertices failed", e);
-      throw new RuntimeException(e);
-    } finally {
-      this.POOL.putTable(table);
-    }
-    return vertices;
+      vertexIt = new VertexIterable(table, rs, this);
+    return vertexIt;
   }
 
   /* (non-Javadoc)
@@ -228,6 +283,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
             this.setIterable(new VertexIterable(table, rs, graph));
           }
     };
+    collectElements(key, value, strategy);
     return strategy.getIterable();
   }
   

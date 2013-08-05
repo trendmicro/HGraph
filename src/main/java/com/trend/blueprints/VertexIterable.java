@@ -52,14 +52,7 @@ public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>
 
       @Override
       public com.tinkerpop.blueprints.Vertex next() {
-        Vertex vertex = null;
-        try {
-          vertex = new Vertex(rs.next(), graph);
-        } catch (IOException e) {
-          LOG.error("initial vertex failed", e);
-          throw new RuntimeException(e);
-        }
-        return vertex;
+        return new Vertex(r.next(), graph);
       }
 
       @Override
