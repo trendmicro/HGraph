@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.trend.blueprints.AbstractElement;
 import com.trend.blueprints.Graph;
 import com.trend.blueprints.HBaseGraphConstants;
 import com.trend.blueprints.HBaseGraphFactory;
@@ -125,7 +126,8 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       loopRowKeysStrategy = new GetSomeRowKeysStrategy(this.startVertexIds);
     }
     
-    this.doGetGeneratedGraphData(loopRowKeysStrategy);
+//    doBFSGetGeneratedGraphData(conf, this.levelToTraverse, loopRowKeysStrategy);
+    doDFSGetGeneratedGraphData(conf, this.levelToTraverse, 0, null, loopRowKeysStrategy);
     return 0;
   }
   
@@ -226,8 +228,89 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     
   }
   
-  private void doGetGeneratedGraphData(LoopRowKeysStrategy rowKeysStrategy) throws Exception {
+  // depth-first-search
+  private long doDFSGetGeneratedGraphData(
+      Configuration conf, int levelToTraverse, int curLevel, 
+      AbstractElement parentElement, LoopRowKeysStrategy rowKeysStrategy) throws Exception {
     
+    if(curLevel > levelToTraverse) {
+      LOG.info("reach last level:" + curLevel);
+      return 0;
+    }
+    String rowKey = null;
+    Vertex vertex = null;
+    int level = 1;
+    long totalVertexCount = 0;
+    long perRowKeyVertexCount = 0;
+    if(null == parentElement) {
+      level = 1;
+      StopWatch timerAll = new StopWatch();
+      StopWatch timerRowKey = null;
+      Graph graph = null;
+      timerAll.start();
+      try {
+        graph = HBaseGraphFactory.open(conf);
+        while(rowKeysStrategy.hasNext()) {
+          rowKey = rowKeysStrategy.next();
+          LOG.info("***HEAD:Start to process rowKey:" + rowKey + "***");
+          LOG.info("***HEAD:level:" + level + "***");
+          timerRowKey = new StopWatch();
+          timerRowKey.start();
+          vertex = graph.getVertex(rowKey);
+          LOG.info("processing vertex:" + vertex.getId());
+          vertex.getPropertyKeys();
+          perRowKeyVertexCount = doDFSGetGeneratedGraphData(
+              conf, levelToTraverse, level + 1, (AbstractElement)vertex, rowKeysStrategy);
+          timerRowKey.stop();
+          perRowKeyVertexCount++;
+          totalVertexCount += perRowKeyVertexCount;
+          LOG.info("Time elapsed:" + timerRowKey.toString() + ", " + timerRowKey.getTime() +  " for processing rowKey:" + 
+              rowKey + " for " + perRowKeyVertexCount + " of vertices");
+          LOG.info("***TAIL:level:" + level + "***");
+          LOG.info("***TAIL:Stop to process rowKey:" + rowKey + "***");
+        }
+        timerAll.stop();
+        LOG.info("Time elapsed:" + timerAll.toString() + ", " + timerAll.getTime() +  " for getting " + 
+            totalVertexCount + " of vertices");
+      } catch(Exception e) {
+        LOG.error("Processing vertex failed for rowKey:" + rowKey, e);
+        throw e;
+      } finally {
+        try {
+          rowKeysStrategy.close();
+        } catch (Exception e) {
+          LOG.error("Close rowKeysStrategy faiiled", e);
+          throw e;
+        }
+        graph.shutdown();
+      }
+      
+    } else {
+      com.trend.blueprints.Vertex parentVertex = (com.trend.blueprints.Vertex) parentElement;
+      LOG.info("***HEAD:level:" + curLevel + "***");
+      for(Edge edge : parentVertex.getEdges()) {
+        LOG.info("processing edge:" + edge.getId());
+        edge.getPropertyKeys();
+        vertex = edge.getVertex(Direction.OUT);
+        LOG.info("processing vertex:" + vertex.getId());
+        totalVertexCount++;
+        vertex.getPropertyKeys();
+        
+        totalVertexCount += doDFSGetGeneratedGraphData(
+            conf, levelToTraverse, curLevel + 1, 
+            (AbstractElement)vertex, rowKeysStrategy);
+      }
+      LOG.info("***TAIL:level:" + curLevel + "***");
+    }
+    
+    return totalVertexCount;
+  }
+  
+  
+  // breadth-first-search
+  private static void doBFSGetGeneratedGraphData(
+      Configuration conf, int levelToTraverse, LoopRowKeysStrategy rowKeysStrategy) 
+          throws Exception {
     StopWatch timerAll = new StopWatch();
     StopWatch timerRowKey = null;
     Graph graph = null;
@@ -241,7 +324,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     String rowKey = null;
     try {
       timerAll.start();
-      graph = HBaseGraphFactory.open(this.getConf());
+      graph = HBaseGraphFactory.open(conf);
       while(rowKeysStrategy.hasNext()) {
         rowKey = rowKeysStrategy.next();
         LOG.info("***HEAD:Start to process rowKey:" + rowKey + "***");
@@ -250,7 +333,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
         vertex = graph.getVertex(rowKey);
         curVertices = Arrays.asList(vertex);
         perVertexCount = 0; level = 0;
-        while(level < this.levelToTraverse) {
+        while(level < levelToTraverse) {
           level++;
           LOG.info("***HEAD:level:" + level + "***");
           totalVertexCount += curVertices.size();
