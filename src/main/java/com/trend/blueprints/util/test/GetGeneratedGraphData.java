@@ -6,6 +6,7 @@ package com.trend.blueprints.util.test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang.time.StopWatch;
@@ -105,6 +106,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       printUsageAndExit();
     }
     
+    LoopRowKeysStrategy loopRowKeysStrategy = null;
     // set {vertex,edge}-table-name
     Configuration conf = this.getConf();
     this.vertexTableName = args[countIndex];
@@ -118,39 +120,114 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     
     // if user not specify start-vertex-id, select all
     if(null == this.startVertexIds || this.startVertexIds.length == 0) {
-      this.startVertexIds = this.getAllDataRowKeys();
+      loopRowKeysStrategy = this.getAllDataRowKeys();
+    } else {
+      loopRowKeysStrategy = new GetSomeRowKeysStrategy(this.startVertexIds);
     }
     
-    this.doGetGeneratedGraphData(this.startVertexIds);
+    this.doGetGeneratedGraphData(loopRowKeysStrategy);
     return 0;
   }
   
-  private String[] getAllDataRowKeys() throws IOException {
-    List<String> rowKeys = new ArrayList<String>();
+  private LoopRowKeysStrategy getAllDataRowKeys() throws IOException {
+    LoopRowKeysStrategy strategy = null;
     HTable table = null;
     ResultScanner rs = null;
-    
     try {
       table = new HTable(this.getConf(), this.vertexTableName);
     
       Scan scan = new Scan();
       scan.setFilter(new FirstKeyOnlyFilter());
       rs = table.getScanner(scan);
-      for(Result r : rs) {
-        rowKeys.add(Bytes.toString(r.getRow()));
-      }
+      strategy = new GetAllRowKeysStrategy(table, rs);
     } catch (IOException e) {
       LOG.error("getSampleDataRowKey failed", e);
       throw e;
-    } finally {
-      if(null != rs) rs.close();
-      if(null != table) table.close();
     }
-    return rowKeys.toArray(new String[]{});
+    return strategy;
   }
   
-  private void doGetGeneratedGraphData(String[] rowKeys) {
-    LOG.info("Sample Graph Vertex:" + Arrays.toString(rowKeys));
+  private static interface LoopRowKeysStrategy {
+    boolean hasNext();
+    String next();
+    void close() throws Exception;
+  }
+  
+  private static class GetAllRowKeysStrategy implements LoopRowKeysStrategy {
+    
+    private HTable table;
+    private ResultScanner rs;
+    private Iterator<Result> rIt;
+    
+    GetAllRowKeysStrategy(HTable table, ResultScanner rs) {
+      super();
+      this.table = table;
+      this.rs = rs;
+      this.rIt = rs.iterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return this.rIt.hasNext();
+    }
+
+    @Override
+    public String next() {
+      Result r = this.rIt.next();
+      String rowKey = Bytes.toString(r.getRow());
+      return rowKey;
+    }
+
+    @Override
+    public void close() throws Exception {
+      if(null != this.rs) this.rs.close();
+      try {
+        if(null != this.table) this.table.close();
+      } catch (IOException e) {
+        LOG.error("close table:" + this.table + " failed", e);
+        throw e;
+      }
+    }
+    
+  }
+  
+  private static class GetSomeRowKeysStrategy implements LoopRowKeysStrategy {
+    
+    private String[] rowKeys;
+    private int idx = -1;
+    
+    /**
+     * @param rowKeys
+     */
+    GetSomeRowKeysStrategy(String[] rowKeys) {
+      super();
+      this.rowKeys = rowKeys;
+    }
+
+    @Override
+    public boolean hasNext() {
+      boolean hasNext = false;
+      if(this.idx + 1 < this.rowKeys.length) {
+        hasNext = true;
+        this.idx++;
+      }
+      return hasNext;
+    }
+
+    @Override
+    public String next() {
+      return this.rowKeys[this.idx];
+    }
+
+    @Override
+    public void close() {
+      //do nothing
+    }
+    
+  }
+  
+  private void doGetGeneratedGraphData(LoopRowKeysStrategy rowKeysStrategy) throws Exception {
+    
     StopWatch timerAll = new StopWatch();
     StopWatch timerRowKey = null;
     Graph graph = null;
@@ -161,11 +238,12 @@ public class GetGeneratedGraphData extends Configured implements Tool {
     int level = 0;
     long totalVertexCount = 0;
     long perVertexCount = 0;
-    
+    String rowKey = null;
     try {
       timerAll.start();
       graph = HBaseGraphFactory.open(this.getConf());
-      for(String rowKey : rowKeys) {
+      while(rowKeysStrategy.hasNext()) {
+        rowKey = rowKeysStrategy.next();
         LOG.info("***HEAD:Start to process rowKey:" + rowKey + "***");
         timerRowKey = new StopWatch();
         timerRowKey.start();
@@ -203,13 +281,23 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       timerAll.stop();
       LOG.info("Time elapsed:" + timerAll.toString() + ", " + timerAll.getTime() +  " for getting " + 
           totalVertexCount + " of vertices");
+    } catch(Exception e) {
+      LOG.error("Processing vertex failed for rowKey:" + rowKey, e);
+      throw e;
     } finally {
+      try {
+        rowKeysStrategy.close();
+      } catch (Exception e) {
+        LOG.error("Close rowKeysStrategy faiiled", e);
+        throw e;
+      }
       graph.shutdown();
     }
   }
   
   private static void printUsageAndExit() {
     System.err.print(GetGeneratedGraphData.class.getSimpleName() + " Usage:");
+    System.out.print("[-D [generic-option][...]]");
     System.err.println(" [-l level-to-traverse] [-i start-vertex-ids] <vertex-table-name> <edge-table-name>");
     System.err.println("-l level-to-traverse default value:" + DEFAULT_LEVEL_TO_TRAVERSE);
     System.err.println("-i start-vertex-ids user can specify what vertex-ids to start, delimitered by ','");
