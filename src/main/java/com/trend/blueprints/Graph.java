@@ -105,7 +105,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
       LOG.error("getEdge failed", e);
       throw new RuntimeException(e);
     } finally {
-      this.POOL.putTable(table);
+      // this.POOL.putTable(table);
     }
     return r;
   }
@@ -124,7 +124,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     } catch (IOException e) {
       LOG.error("getEdges failed", e);
       if(table != null)
-        this.POOL.putTable(table);
+      // this.POOL.putTable(table);
       throw new RuntimeException(e);
     }
     return new EdgeIterable(table, rs, this);
@@ -156,7 +156,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     } catch (IOException e) {
       LOG.error("getEdges with vertex:" + vertex + " failed", e);
       if(null != table)
-        this.POOL.putTable(table);
+      // this.POOL.putTable(table);
       throw new RuntimeException(e);
     }
     edgeIt = new EdgeIterable(table, rs, this);
@@ -264,7 +264,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
       } catch (IOException e) {
         LOG.error("getVertices failed", e);
         if(null != table)
-          this.POOL.putTable(table);
+      // this.POOL.putTable(table);
         throw new RuntimeException(e);
       }
       vertexIt = new VertexIterable(table, rs, this);
@@ -344,7 +344,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
     } catch (IOException e) {
       LOG.error("getScanner failed", e);
       if(table != null)
-        this.POOL.putTable(table);
+      // this.POOL.putTable(table);
       throw new RuntimeException(e);
     }
   }
@@ -407,7 +407,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    * @param table
    */
   protected void returnTable(HTableInterface table) {
-    this.POOL.putTable(table);
+    // this.POOL.putTable(table);
   }
 
 }
