@@ -1,7 +1,14 @@
 /**
- * 
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable
+ * law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ * for the specific language governing permissions and limitations under the License.
  */
-package com.trend.blueprints;
+package org.trend.blueprints;
 
 import java.util.Set;
 
@@ -19,19 +26,18 @@ import org.slf4j.LoggerFactory;
 import com.tinkerpop.blueprints.Element;
 
 /**
- * Base class for graph elements. 
+ * Base class for graph elements.
  * @author scott_miao
- *
  */
 public abstract class AbstractElement implements Element {
-  
+
   private final Graph graph;
-  
+
   private String id;
   private Properties properties = new Properties();
-  
+
   private static Logger LOG = LoggerFactory.getLogger(AbstractElement.class);
-  
+
   /**
    * @param result
    * @param graph
@@ -41,10 +47,10 @@ public abstract class AbstractElement implements Element {
     this.graph = graph;
     this.extractValues(result);
   }
-  
+
   private void extractValues(Result r) {
     this.id = Bytes.toString(r.getRow());
-    if(r.value().length == 0) return;
+    if (r.value().length == 0) return;
     try {
       this.properties.addProperty(r);
     } catch (UnsupportedDataTypeException e) {
@@ -60,7 +66,8 @@ public abstract class AbstractElement implements Element {
     return graph;
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#getId()
    */
   @Override
@@ -68,7 +75,8 @@ public abstract class AbstractElement implements Element {
     return this.id;
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#getProperty(java.lang.String)
    */
   @SuppressWarnings("unchecked")
@@ -77,14 +85,15 @@ public abstract class AbstractElement implements Element {
     return (T) this.properties.getProperty(key);
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#getPropertyKeys()
    */
   @Override
   public Set<String> getPropertyKeys() {
     return this.properties.getPropertyKeys();
   }
-  
+
   /**
    * Get property count
    * @return
@@ -93,7 +102,8 @@ public abstract class AbstractElement implements Element {
     return this.properties.getCount();
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#remove()
    */
   @Override
@@ -102,7 +112,8 @@ public abstract class AbstractElement implements Element {
     throw new UnsupportedOperationException();
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#removeProperty(java.lang.String)
    */
   @SuppressWarnings("unchecked")
@@ -111,7 +122,8 @@ public abstract class AbstractElement implements Element {
     return (T) this.properties.removeProperty(key);
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see com.tinkerpop.blueprints.Element#setProperty(java.lang.String, java.lang.Object)
    */
   @Override
@@ -124,41 +136,42 @@ public abstract class AbstractElement implements Element {
     }
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see java.lang.Object#hashCode()
    */
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37).
-        append(id).
-        toHashCode();
+    return new HashCodeBuilder(17, 37).append(id).toHashCode();
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see java.lang.Object#equals(java.lang.Object)
    */
   @Override
   public boolean equals(Object obj) {
-    if (obj == null) { return false; }
-    if (obj == this) { return true; }
+    if (obj == null) {
+      return false;
+    }
+    if (obj == this) {
+      return true;
+    }
     if (obj.getClass() != getClass()) {
       return false;
     }
     AbstractElement rhs = (AbstractElement) obj;
-    return new EqualsBuilder()
-                  .append(this.id, rhs.id)
-                  .isEquals();
+    return new EqualsBuilder().append(this.id, rhs.id).isEquals();
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
    * @see java.lang.Object#toString()
    */
   @Override
   public String toString() {
-    return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).
-        append("id", id).
-        append("properties", properties).
-        toString();
+    return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).append("id", id)
+        .append("properties", properties).toString();
   }
-  
+
 }
