@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints;
+package org.trend.hgraph;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -57,6 +57,42 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
   
   private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
   
+  private static final Features FEATURES = new Features();
+
+  static {
+
+    FEATURES.supportsSerializableObjectProperty = false;
+    FEATURES.supportsBooleanProperty = true;
+    FEATURES.supportsDoubleProperty = true;
+    FEATURES.supportsFloatProperty = true;
+    FEATURES.supportsIntegerProperty = true;
+    FEATURES.supportsPrimitiveArrayProperty = false;
+    FEATURES.supportsUniformListProperty = false;
+    FEATURES.supportsMixedListProperty = false;
+    FEATURES.supportsLongProperty = true;
+    FEATURES.supportsMapProperty = false;
+    FEATURES.supportsStringProperty = true;
+
+    FEATURES.supportsDuplicateEdges = false;
+    FEATURES.supportsSelfLoops = false;
+    FEATURES.isPersistent = true;
+    FEATURES.isWrapper = false;
+    FEATURES.supportsVertexIteration = true;
+    FEATURES.supportsEdgeIteration = true;
+    FEATURES.supportsVertexIndex = false;
+    FEATURES.supportsEdgeIndex = false;
+    FEATURES.ignoresSuppliedIds = true;
+    FEATURES.supportsTransactions = false;
+    FEATURES.supportsIndices = false;
+    FEATURES.supportsKeyIndices = false;
+    FEATURES.supportsVertexKeyIndex = false;
+    FEATURES.supportsEdgeKeyIndex = false;
+    FEATURES.supportsEdgeRetrieval = true;
+    FEATURES.supportsVertexProperties = true;
+    FEATURES.supportsEdgeProperties = true;
+    FEATURES.supportsThreadedTransactions = false;
+  }
+
   /**
    * @param pool
    * @param conf
@@ -246,8 +282,7 @@ public class Graph implements com.tinkerpop.blueprints.Graph {
    */
   @Override
   public Features getFeatures() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return FEATURES;
   }
 
   /* (non-Javadoc)

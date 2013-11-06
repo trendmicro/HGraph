@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints;
+package org.trend.hgraph;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;

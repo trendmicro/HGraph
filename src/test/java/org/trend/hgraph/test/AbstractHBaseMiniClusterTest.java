@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints.test;
+package org.trend.hgraph.test;
 
 
 import static org.junit.Assert.assertNotNull;

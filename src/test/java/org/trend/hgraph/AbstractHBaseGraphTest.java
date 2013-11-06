@@ -15,14 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints;
+package org.trend.hgraph;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.trend.blueprints.test.AbstractHBaseMiniClusterTest;
+import org.trend.hgraph.HBaseGraphConstants;
+import org.trend.hgraph.test.AbstractHBaseMiniClusterTest;
 
 public abstract class AbstractHBaseGraphTest extends AbstractHBaseMiniClusterTest {
   
@@ -35,7 +36,7 @@ public abstract class AbstractHBaseGraphTest extends AbstractHBaseMiniClusterTes
             "-Dimporttsv.separator=|"}, 
         "test.vertex", 
         new String[] {"property"}, 
-        "org/trend/blueprints/vertex-test.data");
+        "org/trend/hgraph/vertex-test.data");
     
     importData(
         new String[] {
@@ -43,7 +44,7 @@ public abstract class AbstractHBaseGraphTest extends AbstractHBaseMiniClusterTes
             "-Dimporttsv.separator=|"}, 
         "test.edge", 
         new String[] {"property"}, 
-        "org/trend/blueprints/edge-test.data");
+        "org/trend/hgraph/edge-test.data");
     
     printTable("test.vertex");
     printTable("test.edge");

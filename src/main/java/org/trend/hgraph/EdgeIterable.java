@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints;
+package org.trend.hgraph;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
  * @author scott_miao
  *
  */
-public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>  {
+public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
   
-  private static final Logger LOG = LoggerFactory.getLogger(VertexIterable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EdgeIterable.class);
   
   private Graph graph;
   private HTableInterface table;
@@ -43,7 +43,7 @@ public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>
   /**
    * @param rs
    */
-  protected VertexIterable(HTableInterface table, ResultScanner rs, Graph graph) {
+  protected EdgeIterable(HTableInterface table, ResultScanner rs, Graph graph) {
     super();
     Validate.notNull(table, "table shall always not be null");
     Validate.notNull(rs, "rs shall always not be null");
@@ -55,9 +55,9 @@ public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>
 
 
   @Override
-  public Iterator<com.tinkerpop.blueprints.Vertex> iterator() {
+  public Iterator<com.tinkerpop.blueprints.Edge> iterator() {
     final Iterator<Result> r = this.rs.iterator();
-    return new Iterator<com.tinkerpop.blueprints.Vertex>() {
+    return new Iterator<com.tinkerpop.blueprints.Edge>() {
       
       @Override
       public boolean hasNext() {
@@ -65,8 +65,8 @@ public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>
       }
 
       @Override
-      public com.tinkerpop.blueprints.Vertex next() {
-        return new Vertex(r.next(), graph);
+      public com.tinkerpop.blueprints.Edge next() {
+        return new Edge(r.next(), graph);
       }
 
       @Override
@@ -76,7 +76,8 @@ public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>
       
     };
   }
-  
+
+
   /* (non-Javadoc)
    * @see java.lang.Object#finalize()
    */

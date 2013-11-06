@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints.util.test;
+package org.trend.hgraph.util.test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -43,9 +43,9 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.trend.blueprints.HBaseGraphConstants;
-import org.trend.blueprints.Properties;
-import org.trend.blueprints.Properties.Pair;
+import org.trend.hgraph.HBaseGraphConstants;
+import org.trend.hgraph.Properties;
+import org.trend.hgraph.Properties.Pair;
 
 /**
  * Generate test data for testing <code>trend-graph-hbase</code>.

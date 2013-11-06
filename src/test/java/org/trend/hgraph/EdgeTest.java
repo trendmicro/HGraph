@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints;
+package org.trend.hgraph;
 
 import static org.junit.Assert.*;
 
@@ -26,6 +26,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.trend.hgraph.Edge;
+import org.trend.hgraph.Graph;
+import org.trend.hgraph.HBaseGraphFactory;
+import org.trend.hgraph.Vertex;
 
 import com.tinkerpop.blueprints.Direction;
 

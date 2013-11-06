@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints.util.test;
+package org.trend.hgraph.util.test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,10 +37,10 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.trend.blueprints.AbstractElement;
-import org.trend.blueprints.Graph;
-import org.trend.blueprints.HBaseGraphConstants;
-import org.trend.blueprints.HBaseGraphFactory;
+import org.trend.hgraph.AbstractElement;
+import org.trend.hgraph.Graph;
+import org.trend.hgraph.HBaseGraphConstants;
+import org.trend.hgraph.HBaseGraphFactory;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -300,7 +300,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
       }
       
     } else {
-      org.trend.blueprints.Vertex parentVertex = (org.trend.blueprints.Vertex) parentElement;
+      org.trend.hgraph.Vertex parentVertex = (org.trend.hgraph.Vertex) parentElement;
       LOG.info("***HEAD:level:" + curLevel + "***");
       for(Edge edge : parentVertex.getEdges()) {
         LOG.info("processing edge:" + edge.getId());
@@ -356,7 +356,7 @@ public class GetGeneratedGraphData extends Configured implements Tool {
           for(Vertex tmpVertex : curVertices) {
             LOG.info("processing vertex:" + tmpVertex.getId());
             tmpVertex.getPropertyKeys();
-            subEdges = ((org.trend.blueprints.Vertex) vertex).getEdges();
+            subEdges = ((org.trend.hgraph.Vertex) vertex).getEdges();
             for(Edge edge : subEdges) {
               LOG.info("processing edge:" + edge.getId());
               edge.getPropertyKeys();

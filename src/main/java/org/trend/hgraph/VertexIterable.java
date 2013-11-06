@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints;
+package org.trend.hgraph;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
  * @author scott_miao
  *
  */
-public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
+public class VertexIterable implements Iterable<com.tinkerpop.blueprints.Vertex>  {
   
-  private static final Logger LOG = LoggerFactory.getLogger(EdgeIterable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(VertexIterable.class);
   
   private Graph graph;
   private HTableInterface table;
@@ -43,7 +43,7 @@ public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
   /**
    * @param rs
    */
-  protected EdgeIterable(HTableInterface table, ResultScanner rs, Graph graph) {
+  protected VertexIterable(HTableInterface table, ResultScanner rs, Graph graph) {
     super();
     Validate.notNull(table, "table shall always not be null");
     Validate.notNull(rs, "rs shall always not be null");
@@ -55,9 +55,9 @@ public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
 
 
   @Override
-  public Iterator<com.tinkerpop.blueprints.Edge> iterator() {
+  public Iterator<com.tinkerpop.blueprints.Vertex> iterator() {
     final Iterator<Result> r = this.rs.iterator();
-    return new Iterator<com.tinkerpop.blueprints.Edge>() {
+    return new Iterator<com.tinkerpop.blueprints.Vertex>() {
       
       @Override
       public boolean hasNext() {
@@ -65,8 +65,8 @@ public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
       }
 
       @Override
-      public com.tinkerpop.blueprints.Edge next() {
-        return new Edge(r.next(), graph);
+      public com.tinkerpop.blueprints.Vertex next() {
+        return new Vertex(r.next(), graph);
       }
 
       @Override
@@ -76,8 +76,7 @@ public class EdgeIterable implements Iterable<com.tinkerpop.blueprints.Edge>  {
       
     };
   }
-
-
+  
   /* (non-Javadoc)
    * @see java.lang.Object#finalize()
    */

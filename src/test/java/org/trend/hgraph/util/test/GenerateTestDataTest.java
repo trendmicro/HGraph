@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints.util.test;
+package org.trend.hgraph.util.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -36,11 +36,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.trend.blueprints.Graph;
-import org.trend.blueprints.HBaseGraphConstants;
-import org.trend.blueprints.HBaseGraphFactory;
-import org.trend.blueprints.Vertex;
-import org.trend.blueprints.test.AbstractHBaseMiniClusterTest;
+import org.trend.hgraph.Graph;
+import org.trend.hgraph.HBaseGraphConstants;
+import org.trend.hgraph.HBaseGraphFactory;
+import org.trend.hgraph.Vertex;
+import org.trend.hgraph.test.AbstractHBaseMiniClusterTest;
+import org.trend.hgraph.util.test.GenerateTestData;
 
 import com.tinkerpop.blueprints.Direction;
 

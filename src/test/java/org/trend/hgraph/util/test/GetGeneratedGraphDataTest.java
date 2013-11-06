@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.trend.blueprints.util.test;
+package org.trend.hgraph.util.test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,8 +28,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.trend.blueprints.HBaseGraphConstants;
-import org.trend.blueprints.test.AbstractHBaseMiniClusterTest;
+import org.trend.hgraph.HBaseGraphConstants;
+import org.trend.hgraph.test.AbstractHBaseMiniClusterTest;
+import org.trend.hgraph.util.test.GenerateTestData;
+import org.trend.hgraph.util.test.GetGeneratedGraphData;
 
 public class GetGeneratedGraphDataTest extends AbstractHBaseMiniClusterTest {
   
