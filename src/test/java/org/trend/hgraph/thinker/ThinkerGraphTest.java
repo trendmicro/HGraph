@@ -89,7 +89,9 @@ public class ThinkerGraphTest extends GraphTest {
     printTestPerformance("GraphSONReaderTestSuite", this.stopWatch());
   }
 
+  @Override
   public Graph generateGraph() {
+    // TODO change to hgraph
     return new TinkerGraph();
   }
 
@@ -108,7 +110,7 @@ public class ThinkerGraphTest extends GraphTest {
 
   @Override
   public Graph generateGraph(String arg0) {
-    // TODO Auto-generated method stub
+    // TODO change to hgraph
     return null;
   }
 
