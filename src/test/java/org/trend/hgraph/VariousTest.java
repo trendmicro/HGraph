@@ -17,9 +17,11 @@
  */
 package org.trend.hgraph;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 import org.apache.commons.lang.time.StopWatch;
@@ -142,7 +144,58 @@ public class VariousTest {
     String[] dest = new String[2];
     System.arraycopy(src, 1, dest, 0, 2);
     assertArrayEquals(new String[]{"b", "c"}, dest);
-    
-    
   }
+
+  @Test
+  public void testBigDecimalCompare() {
+    BigDecimal a = null;
+    BigDecimal b = null;
+
+    System.out.println("***test scale");
+    a = new BigDecimal("2.12345");
+    System.out.println(a.scale());
+
+    a = new BigDecimal("200.12345");
+    System.out.println(a.scale());
+
+    a = new BigDecimal("200.12");
+    System.out.println(a.scale());
+
+    a = new BigDecimal("200.12345");
+    System.out.println(a);
+    a = a.setScale(2, RoundingMode.DOWN);
+    System.out.println(a);
+    System.out.println(a.scale());
+
+    System.out.println("***test compare #1");
+    a = new BigDecimal("500.123456");
+    b = new BigDecimal("500.126543");
+
+    System.out.println("a=" + a);
+    System.out.println("b=" + b);
+    System.out.println("a comapre b =>" + a.compareTo(b));
+
+    a = a.setScale(2, RoundingMode.DOWN);
+    b = b.setScale(2, RoundingMode.DOWN);
+
+    System.out.println("a=" + a);
+    System.out.println("b=" + b);
+    System.out.println("a comapre b =>" + a.compareTo(b));
+
+    System.out.println("***test compare #2");
+    a = new BigDecimal("500.1");
+    b = new BigDecimal("500.126543");
+
+    System.out.println("a=" + a);
+    System.out.println("b=" + b);
+    System.out.println("a comapre b =>" + a.compareTo(b));
+
+    a = a.setScale(3, RoundingMode.DOWN);
+    b = b.setScale(3, RoundingMode.DOWN);
+
+    System.out.println("a=" + a);
+    System.out.println("b=" + b);
+    System.out.println("a comapre b =>" + a.compareTo(b));
+  }
+
 }
