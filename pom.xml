@@ -10,10 +10,18 @@
   <name>trend-graph-hbase</name>
   <url>http://maven.apache.org</url>
   
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  
   <repositories>
     <repository>
-      <id>tmh6-repo</id>
-      <url>http://mavenrepo.spn.tw.trendnet.org:8081/artifactory/repo/</url>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
     </repository>
     <repository>
       <id>sonatype-oss-snapshots</id>
@@ -22,6 +30,14 @@
       <snapshots><enabled>true</enabled></snapshots>
     </repository>
   </repositories>
+  
+  <developers>
+    <developer>
+      <id>takeshi.miao</id>
+      <name>Scott Miao</name>
+      <email>takeshi.miao@gmail.com</email>
+    </developer>
+  </developers>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
