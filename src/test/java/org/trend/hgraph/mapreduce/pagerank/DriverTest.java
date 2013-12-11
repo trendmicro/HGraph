@@ -20,12 +20,8 @@ package org.trend.hgraph.mapreduce.pagerank;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import java.io.InputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -92,14 +88,14 @@ public class DriverTest extends AbstractHBaseGraphTest {
         driver.run(new String[] { TEST_VERTEX_01, TEST_EDGE_01, "/pagerank-test-01" });
     assertEquals(0, retCode);
 
-    // get content
-    FileSystem fs = TEST_UTIL.getTestFileSystem();
-    Path path = fs.getHomeDirectory();
-    String finalOutputPath = driver.getFinalOutputPath();
-    path = new Path(path, finalOutputPath + "/part-r-00000");
-    InputStream is = fs.open(path);
-    System.out.println("result.content=\n" + IOUtils.toString(is));
-    IOUtils.closeQuietly(is);
+    // get content, for manual test purpose
+    // FileSystem fs = TEST_UTIL.getTestFileSystem();
+    // Path path = fs.getHomeDirectory();
+    // String finalOutputPath = driver.getFinalOutputPath();
+    // path = new Path(path, finalOutputPath + "/part-r-00000");
+    // InputStream is = fs.open(path);
+    // System.out.println("result.content=\n" + IOUtils.toString(is));
+    // IOUtils.closeQuietly(is);
   }
   
   @Test
@@ -112,6 +108,27 @@ public class DriverTest extends AbstractHBaseGraphTest {
     printVertexPageRank();
   }
   
+  @Test
+  public void testPageRank_import_totalCount() throws Exception {
+    Configuration conf = TEST_UTIL.getConfiguration();
+    Driver driver = new Driver(conf);
+    int retCode =
+        driver.run(new String[] { "-i", "-c", TEST_VERTEX_01, TEST_EDGE_01, "/pagerank-test-03" });
+    assertEquals(0, retCode);
+    printVertexPageRank();
+  }
+
+  @Test
+  public void testPageRank_import_threshold_2() throws Exception {
+    Configuration conf = TEST_UTIL.getConfiguration();
+    Driver driver = new Driver(conf);
+    int retCode =
+        driver.run(new String[] { "-i", "-t", "2", TEST_VERTEX_01, TEST_EDGE_01,
+            "/pagerank-test-04" });
+    assertEquals(0, retCode);
+    printVertexPageRank();
+  }
+
   private static void printVertexPageRank() throws IOException {
     Configuration conf = TEST_UTIL.getConfiguration();
     HTable table = null;

@@ -21,11 +21,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
@@ -47,7 +44,7 @@ public class CalculatePageRankReducer extends
   
   private double verticesTotalCnt = 1.0D;
   private double dampingFactor = Constants.PAGE_RANK_DAMPING_FACTOR_DEFAULT_VALUE;
-  private String vertexTableName;
+  private HTable vertexTable = null;
   private int pageRankCompareScale = 3;
 
   /*
@@ -67,7 +64,7 @@ public class CalculatePageRankReducer extends
     double newPageRank =
         (dampingFactor * incomingPageRankSum) + ((1.0D - dampingFactor) / verticesTotalCnt);
 
-    double oldPageRank = getPageRank(context.getConfiguration(), Bytes.toBytes(rowkey));
+    double oldPageRank = Utils.getPageRank(vertexTable, rowkey, Constants.PAGE_RANK_CQ_TMP_NAME);
     if (!pageRankEquals(oldPageRank, newPageRank)) {
       // collect pageRank changing count with counter
       context.getCounter(Counters.CHANGED_PAGE_RANK_COUNT).increment(1);
@@ -83,50 +80,32 @@ public class CalculatePageRankReducer extends
     return a.compareTo(b) == 0 ? true : false;
   }
 
-  private double getPageRank(Configuration conf, byte[] key) throws IOException {
-    double pageRank = 0D;
-    HTable table = null;
-    Get get = null;
-    Result r = null;
-    try {
-      table = new HTable(conf, vertexTableName);
-      get = new Get(key);
-      r = table.get(get);
-      if (!r.isEmpty()) {
-        byte[] colValue =
-            r.getValue(Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
-              Bytes
-                  .toBytes("pageRank"
-                      + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER
-                      + "Double"));
-        if (null != colValue) pageRank = Bytes.toDouble(colValue);
-      }
-    } catch (IOException e) {
-      System.err.println("access HTable failed");
-      e.printStackTrace(System.err);
-      throw e;
-    } finally {
-      table.close();
-    }
-    return pageRank;
-  }
-
   /*
    * (non-Javadoc)
    * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
    */
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
-    String value = context.getConfiguration().get(Constants.PAGE_RANK_VERTICES_TOTAL_COUNT_KEY);
+    Configuration conf = context.getConfiguration();
+
+    vertexTable =
+        Utils.initTable(conf, HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY,
+          this.getClass());
+
+    String value = conf.get(Constants.PAGE_RANK_VERTICES_TOTAL_COUNT_KEY);
     if (null != value) verticesTotalCnt = Double.parseDouble(value);
 
-    value = context.getConfiguration().get(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY);
-    Validate.notEmpty(value, HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY
-        + " shall be set before running this reducer:" + this.getClass().getName());
-    vertexTableName = value;
-
-    value = context.getConfiguration().get(Constants.PAGE_RANK_DAMPING_FACTOR_KEY);
+    value = conf.get(Constants.PAGE_RANK_DAMPING_FACTOR_KEY);
     if (null != value) dampingFactor = Double.parseDouble(value);
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.apache.hadoop.mapreduce.Reducer#cleanup(org.apache.hadoop.mapreduce.Reducer.Context)
+   */
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    vertexTable.close();
   }
 
 }

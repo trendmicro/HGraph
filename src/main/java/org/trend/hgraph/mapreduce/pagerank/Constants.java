@@ -29,4 +29,9 @@ public class Constants {
   public static final double PAGE_RANK_DAMPING_FACTOR_DEFAULT_VALUE = 0.85D;
 
   public static final String PAGE_RANK_VERTICES_TOTAL_COUNT_KEY = "mr.pagerank.vertices.total.count";
+
+  public static final String PAGE_RANK_CQ_NAME = "pageRank";
+
+  public static final String PAGE_RANK_CQ_TMP_NAME = "tmpPageRank";
+
 }

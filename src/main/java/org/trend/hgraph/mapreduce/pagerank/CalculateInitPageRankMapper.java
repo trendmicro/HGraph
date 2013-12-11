@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
@@ -42,8 +41,11 @@ import org.trend.hgraph.HBaseGraphConstants;
  */
 public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, DoubleWritable> {
 
-  private String edgeTableName;
+  private HTable edgeTable = null;
+  private HTable vertexTable = null;
   
+  private String tmpPageRankCq = Constants.PAGE_RANK_CQ_TMP_NAME;
+
   enum Counters {VERTEX_COUNT}
 
   /*
@@ -55,11 +57,13 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
   protected void map(final ImmutableBytesWritable key, final Result value, final Context context)
       throws IOException, InterruptedException {
     String rowKey = Bytes.toString(key.get());
-    double pageRank = getPageRank(value);
+    double pageRank = Utils.getPageRank(value, Constants.PAGE_RANK_CQ_NAME);
+    // write current pageRank to tmp
+    Utils.writePageRank(vertexTable, rowKey, tmpPageRankCq, pageRank);
     List<String> outgoingRowKeys = null;
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTableName, rowKey);
+    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTable, rowKey);
     dispatchPageRank(outgoingRowKeys, pageRank, new ContextWriterStrategy() {
       @Override
       public void write(String key, double value) throws IOException, InterruptedException {
@@ -83,14 +87,12 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     void write(String key, double value) throws IOException, InterruptedException;
   }
 
-  static List<String> collectOutgoingRowKeys(Configuration conf, String tableName, String rowKey)
+  static List<String> collectOutgoingRowKeys(Configuration conf, HTable edgeTable, String rowKey)
       throws IOException {
     String outgoingRowKey = null;
     List<String> outgoingRowKeys = null;
-    HTable edgeTable = null;
     ResultScanner rs = null;
     try {
-      edgeTable = new HTable(conf, tableName);
       Scan scan = new Scan();
 
       scan.setStartRow(Bytes.toBytes(rowKey
@@ -105,11 +107,11 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
         outgoingRowKeys.add(outgoingRowKey);
       }
     } catch (IOException e) {
-      System.err.println("access htable:" + tableName + " failed");
+      System.err.println("access htable:" + Bytes.toString(edgeTable.getTableName()) + " failed");
       e.printStackTrace(System.err);
       throw e;
     } finally {
-      edgeTable.close();
+      rs.close();
     }
     return outgoingRowKeys;
   }
@@ -129,29 +131,28 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     return outgoingRowKey;
   }
 
-  private double getPageRank(Result value) {
-    byte[] colValue =
-        value.getValue(
-          Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
-          Bytes.toBytes("pageRank"
-              + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "Double"));
-    double pageRank = 0.0D;
-    if (null != colValue) {
-      pageRank = Bytes.toDouble(colValue);
-    }
-    return pageRank;
-  }
-
   /*
    * (non-Javadoc)
    * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
    */
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
-    edgeTableName =
-        context.getConfiguration().get(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY);
-    Validate.notEmpty(edgeTableName, HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY
-        + " shall be set before running this Mapper:" + this.getClass().getName());
+    Configuration conf = context.getConfiguration();
+    vertexTable =
+        Utils.initTable(conf, HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY,
+          this.getClass());
+    edgeTable =
+        Utils.initTable(conf, HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, this.getClass());
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.apache.hadoop.mapreduce.Mapper#cleanup(org.apache.hadoop.mapreduce.Mapper.Context)
+   */
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    vertexTable.close();
+    edgeTable.close();
   }
 
 }

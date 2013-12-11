@@ -153,7 +153,7 @@ public class Driver extends Configured implements Tool {
     // collect total vertices count
     if (includeVeticesTotalCount) {
       int retCode = 0;
-      retCode = collectVeticesTotalCount(conf);
+      retCode = collectVeticesTotalCount(conf, vertexTableName);
       if (retCode != 0) {
         System.err.println("run vertices total count job failed, with retCode:" + retCode);
         return retCode;
@@ -284,14 +284,15 @@ public class Driver extends Configured implements Tool {
     return job;
   }
 
-  private static int collectVeticesTotalCount(Configuration conf) throws IOException,
+  private static int collectVeticesTotalCount(Configuration conf, String vertexTableName)
+      throws IOException,
       InterruptedException, ClassNotFoundException {
     long totalCount = 1L;
     boolean success = false;
     Counter counter = null;
     String jobName = null;
     try {
-      Job job = RowCounter.createSubmittableJob(conf, null);
+      Job job = RowCounter.createSubmittableJob(conf, new String[] { vertexTableName });
       if (job == null) {
         System.err.println("job is null");
         return 1;
@@ -300,7 +301,7 @@ public class Driver extends Configured implements Tool {
       success = job.waitForCompletion(true);
       counter =
           job.getCounters().findCounter(
-            "org.apache.hadoop.hbase.mapreduce.RowCounter.RowCounterMapper.Counters", "ROWS");
+            "org.apache.hadoop.hbase.mapreduce.RowCounter$RowCounterMapper$Counters", "ROWS");
       jobName = job.getJobName();
       if (null != counter) {
         totalCount = counter.getValue();

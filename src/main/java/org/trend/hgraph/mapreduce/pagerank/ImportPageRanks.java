@@ -64,13 +64,13 @@ public class ImportPageRanks extends Configured implements Tool {
         throws IOException, InterruptedException {
       HTable table = null;
       Put put = null;
-
+      String rowKey = Bytes.toString(key.getBytes()).trim();
       try {
         table = new HTable(context.getConfiguration(), vertexTableName);
-        put = new Put(key.getBytes());
+        put = new Put(Bytes.toBytes(rowKey));
         put.add(
           Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
-          Bytes.toBytes("pageRank"
+          Bytes.toBytes(Constants.PAGE_RANK_CQ_NAME
               + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "Double"),
           Bytes.toBytes(value.get()));
         table.put(put);

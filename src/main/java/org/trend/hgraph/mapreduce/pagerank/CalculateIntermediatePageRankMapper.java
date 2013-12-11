@@ -23,14 +23,14 @@ import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.di
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.trend.hgraph.HBaseGraphConstants;
 import org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.ContextWriterStrategy;
-import org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.Counters;
 
 /**
  * A <code>Mapper</code> for calculating intermediate pagerank value from HDFS.
@@ -39,8 +39,12 @@ import org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.Counters;
 public class CalculateIntermediatePageRankMapper extends
     Mapper<BytesWritable, DoubleWritable, BytesWritable, DoubleWritable> {
 
-  private String edgeTableName = null;
+  private HTable edgeTable = null;
+  private HTable vertexTable = null;
+  
+  private String tmpPageRankCq = Constants.PAGE_RANK_CQ_TMP_NAME;
 
+  enum Counters {VERTEX_COUNT}
   /*
    * (non-Javadoc)
    * @see org.apache.hadoop.mapreduce.Mapper#map(java.lang.Object, java.lang.Object, Context)
@@ -50,10 +54,13 @@ public class CalculateIntermediatePageRankMapper extends
       throws IOException, InterruptedException {
     String rowKey = Bytes.toString(key.getBytes()).trim();
     double pageRank = value.get();
+    // write current pageRank to tmp
+    Utils.writePageRank(vertexTable, rowKey, tmpPageRankCq, pageRank);
+
     List<String> outgoingRowKeys = null;
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTableName, rowKey);
+    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTable, rowKey);
     dispatchPageRank(outgoingRowKeys, pageRank,
       new ContextWriterStrategy() {
 
@@ -70,10 +77,22 @@ public class CalculateIntermediatePageRankMapper extends
    */
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
-    edgeTableName =
-        context.getConfiguration().get(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY);
-    Validate.notEmpty(edgeTableName, HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY
-        + " shall be set before running this Mapper:" + this.getClass().getName());
+    Configuration conf = context.getConfiguration();
+    vertexTable =
+        Utils.initTable(conf, HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY,
+          this.getClass());
+    edgeTable =
+        Utils.initTable(conf, HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, this.getClass());
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.apache.hadoop.mapreduce.Mapper#cleanup(org.apache.hadoop.mapreduce.Mapper.Context)
+   */
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    vertexTable.close();
+    edgeTable.close();
   }
 
 }
