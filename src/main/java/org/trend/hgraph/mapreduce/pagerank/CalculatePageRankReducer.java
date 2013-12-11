@@ -65,18 +65,18 @@ public class CalculatePageRankReducer extends
         (dampingFactor * incomingPageRankSum) + ((1.0D - dampingFactor) / verticesTotalCnt);
 
     double oldPageRank = Utils.getPageRank(vertexTable, rowkey, Constants.PAGE_RANK_CQ_TMP_NAME);
-    if (!pageRankEquals(oldPageRank, newPageRank)) {
+    if (!pageRankEquals(oldPageRank, newPageRank, pageRankCompareScale)) {
       // collect pageRank changing count with counter
       context.getCounter(Counters.CHANGED_PAGE_RANK_COUNT).increment(1);
     }
     context.write(key, new DoubleWritable(newPageRank));
   }
 
-  private boolean pageRankEquals(double src, double dest) {
+  static boolean pageRankEquals(double src, double dest, int scale) {
     BigDecimal a = new BigDecimal(src);
     BigDecimal b = new BigDecimal(dest);
-    a = a.setScale(pageRankCompareScale, RoundingMode.DOWN);
-    b = b.setScale(pageRankCompareScale, RoundingMode.DOWN);
+    a = a.setScale(scale, RoundingMode.DOWN);
+    b = b.setScale(scale, RoundingMode.DOWN);
     return a.compareTo(b) == 0 ? true : false;
   }
 
