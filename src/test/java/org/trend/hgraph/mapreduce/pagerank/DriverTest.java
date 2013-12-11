@@ -20,7 +20,11 @@ package org.trend.hgraph.mapreduce.pagerank;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -33,6 +37,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,25 +51,14 @@ import org.trend.hgraph.test.AbstractHBaseMiniClusterTest;
  */
 public class DriverTest extends AbstractHBaseGraphTest {
 
-  private static final String TEST_EDGE_01 = "test.edge-01";
-  private static final String TEST_VERTEX_01 = "test.vertex-01";
   private static final String CF_PROPERTY =
       HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME;
   private static final String CQ_DEL =
       HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER;
-  private static final String EDGE_DEL_1 = HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1;
-  private static final String EDGE_DEL_2 = HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_2;
-  private static final String EDGE_LABEL = "link";
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     AbstractHBaseMiniClusterTest.setUpBeforeClass();
-
-    createGraphTables();
-    generateGraphData();
-
-    printTable(TEST_VERTEX_01);
-    printTable(TEST_EDGE_01);
   }
 
   @AfterClass
@@ -82,10 +76,13 @@ public class DriverTest extends AbstractHBaseGraphTest {
 
   @Test
   public void testPageRank_default() throws Exception {
+    createGraphTables("test.vertex-01", "test.edge-01",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
     int retCode =
-        driver.run(new String[] { TEST_VERTEX_01, TEST_EDGE_01, "/pagerank-test-01" });
+        driver.run(new String[] { "test.vertex-01", "test.edge-01", "/pagerank-test-01" });
     assertEquals(0, retCode);
 
     // get content, for manual test purpose
@@ -100,41 +97,52 @@ public class DriverTest extends AbstractHBaseGraphTest {
   
   @Test
   public void testPageRank_import() throws Exception {
+    createGraphTables("test.vertex-02", "test.edge-02",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
     int retCode =
-        driver.run(new String[] {"-i", TEST_VERTEX_01, TEST_EDGE_01, "/pagerank-test-02" });
+        driver.run(new String[] { "-i", "test.vertex-02", "test.edge-02", "/pagerank-test-02" });
     assertEquals(0, retCode);
-    printVertexPageRank();
+    printVertexPageRank("test.vertex-02");
   }
   
   @Test
   public void testPageRank_import_totalCount() throws Exception {
+    createGraphTables("test.vertex-03", "test.edge-03",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
     int retCode =
-        driver.run(new String[] { "-i", "-c", TEST_VERTEX_01, TEST_EDGE_01, "/pagerank-test-03" });
+        driver
+            .run(new String[] { "-i", "-c", "test.vertex-03", "test.edge-03",
+            "/pagerank-test-03" });
     assertEquals(0, retCode);
-    printVertexPageRank();
+    printVertexPageRank("test.vertex-03");
   }
 
   @Test
   public void testPageRank_import_threshold_2() throws Exception {
+    createGraphTables("test.vertex-04", "test.edge-04",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
     int retCode =
-        driver.run(new String[] { "-i", "-t", "2", TEST_VERTEX_01, TEST_EDGE_01,
+        driver.run(new String[] { "-i", "-t", "2", "test.vertex-04", "test.edge-04",
             "/pagerank-test-04" });
     assertEquals(0, retCode);
-    printVertexPageRank();
+    printVertexPageRank("test.vertex-04");
   }
 
-  private static void printVertexPageRank() throws IOException {
+  private static void printVertexPageRank(String tableName) throws IOException {
     Configuration conf = TEST_UTIL.getConfiguration();
     HTable table = null;
     ResultScanner rs = null;
     try {
-      table = new HTable(conf, TEST_VERTEX_01);
+      table = new HTable(conf, tableName);
       rs = table.getScanner(new Scan());
       for (Result r : rs) {
         System.out.println("rowkey=" + Bytes.toString(r.getRow()) + ", ");
@@ -151,7 +159,21 @@ public class DriverTest extends AbstractHBaseGraphTest {
     }
   }
 
-  private static void createGraphTables() throws IOException {
+  private static void createGraphTables(String vertexTableName, String edgeTableName, String cf)
+      throws IOException {
+    createGraphTable(vertexTableName, cf);
+    createGraphTable(edgeTableName, cf);
+
+    generateGraphDataTest("org/trend/hgraph/mapreduce/pagerank/vertex-test-01.data",
+      vertexTableName, Constants.PAGE_RANK_CQ_NAME, true);
+    generateGraphDataTest("org/trend/hgraph/mapreduce/pagerank/edge-test-01.data", edgeTableName,
+      "dummy", false);
+
+    printTable(vertexTableName);
+    printTable(edgeTableName);
+  }
+
+  private static void createGraphTable(String tableName, String cf) throws IOException {
     HBaseAdmin admin = null;
     HTableDescriptor htd = null;
     HColumnDescriptor hcd = null;
@@ -159,13 +181,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
     try {
       admin = TEST_UTIL.getHBaseAdmin();
 
-      htd = new HTableDescriptor(TEST_VERTEX_01);
-      hcd = new HColumnDescriptor(CF_PROPERTY);
-      htd.addFamily(hcd);
-      admin.createTable(htd);
-
-      htd = new HTableDescriptor(TEST_EDGE_01);
-      hcd = new HColumnDescriptor(CF_PROPERTY);
+      htd = new HTableDescriptor(tableName);
+      hcd = new HColumnDescriptor(cf);
       htd.addFamily(hcd);
       admin.createTable(htd);
     } catch (IOException e) {
@@ -174,84 +191,47 @@ public class DriverTest extends AbstractHBaseGraphTest {
     }
   }
 
-  private static void generateGraphData() throws IOException {
+  private static void generateGraphDataTest(String dataPath, String tableName, String cq,
+      boolean isDouble) throws IOException {
+    InputStream data = DriverTest.class.getClassLoader().getResourceAsStream(dataPath);
+    LineIterator it = IOUtils.lineIterator(new InputStreamReader(data));
+    String record = null;
+    Assert.assertEquals(true, it.hasNext());
+
     HTable table = null;
-    Put put = null;
-    Configuration conf = TEST_UTIL.getConfiguration();
-    // generate Vertex data
     try {
-      table = new HTable(conf, TEST_VERTEX_01);
+      table = new HTable(TEST_UTIL.getConfiguration(), tableName);
       table.setAutoFlush(false);
-      for (int a = 1; a <= 5; a++) {
-        put = new Put(Bytes.toBytes(("n" + a)));
-        put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("pageRank" + CQ_DEL + "Double")),
-          Bytes.toBytes((0.2D)));
+      Put put = null;
+      String[] values = null;
+      while (it.hasNext()) {
+        record = it.next();
+        values = record.split("\\|");
+        Assert.assertNotNull(values);
+        Assert.assertEquals(2, values.length);
+        put = new Put(Bytes.toBytes(values[0]));
+        if (isDouble) {
+          put.add(
+            Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
+            Bytes.toBytes(cq + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER
+                + "Double"), Bytes.toBytes(Double.parseDouble(values[1])));
+        } else {
+          put.add(
+            Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
+            Bytes.toBytes(cq + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER
+                + "String"), Bytes.toBytes(values[1]));
+        }
         table.put(put);
       }
       table.flushCommits();
     } catch (IOException e) {
-      System.err.println("generate vertex data failed");
+      System.err.println("generate data for table:" + tableName + " failed");
       e.printStackTrace(System.err);
+      throw e;
     } finally {
       table.close();
-    }
-
-    // generate Edge data
-    try {
-      table = new HTable(conf, TEST_EDGE_01);
-      table.setAutoFlush(false);
-
-      put = new Put(Bytes.toBytes(("n1" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n2")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n1" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n4")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n2" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n5")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n2" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n3")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n3" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n4")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n4" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n5")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n5" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n1")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n5" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n2")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      put = new Put(Bytes.toBytes(("n5" + EDGE_DEL_1 + EDGE_LABEL + EDGE_DEL_2 + "n3")));
-      put.add(Bytes.toBytes(CF_PROPERTY), Bytes.toBytes(("dummy" + CQ_DEL + "String")),
-        Bytes.toBytes("dummy"));
-      table.put(put);
-
-      table.flushCommits();
-    } catch (IOException e) {
-      System.err.println("generate edge data failed");
-      e.printStackTrace(System.err);
-    } finally {
-      table.close();
+      LineIterator.closeQuietly(it);
+      IOUtils.closeQuietly(data);
     }
   }
 
