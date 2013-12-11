@@ -48,13 +48,12 @@ public class CalculateIntermediatePageRankMapper extends
   @Override
   protected void map(final BytesWritable key, final DoubleWritable value, final Context context)
       throws IOException, InterruptedException {
-    String rowKey = Bytes.toString(key.getBytes());
+    String rowKey = Bytes.toString(key.getBytes()).trim();
     double pageRank = value.get();
     List<String> outgoingRowKeys = null;
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(),
-          edgeTableName, rowKey);
+    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTableName, rowKey);
     dispatchPageRank(outgoingRowKeys, pageRank,
       new ContextWriterStrategy() {
 

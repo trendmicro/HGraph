@@ -127,10 +127,9 @@ public class ImportPageRanks extends Configured implements Tool {
     LOGGER.info("pass two options:" + inputPath + ", " + vertexTableName);
 
     Configuration conf = getConf();
-    conf.set("mapred.input.dir", inputPath);
     conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, vertexTableName);
 
-    Job job = createSubmittableJob(conf);
+    Job job = createSubmittableJob(conf, inputPath);
     String jobName = job.getJobName();
     LOGGER.info("start to run job:" + jobName);
     boolean succeed = job.waitForCompletion(true);
@@ -139,10 +138,9 @@ public class ImportPageRanks extends Configured implements Tool {
     return 0;
   }
 
-  public static Job createSubmittableJob(Configuration conf) throws IOException {
+  public static Job createSubmittableJob(Configuration conf, String inputPath) throws IOException {
     String vertexTableName = conf.get(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY);
     Validate.notEmpty(vertexTableName, "vertexTableName shall always not be empty");
-    String inputPath = conf.get("mapred.input.dir");
     Validate.notEmpty(inputPath, "inputPath shall always not be empty");
     
     long timestamp = System.currentTimeMillis();

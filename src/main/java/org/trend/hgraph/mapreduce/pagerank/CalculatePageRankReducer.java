@@ -58,6 +58,7 @@ public class CalculatePageRankReducer extends
   protected void reduce(BytesWritable key, Iterable<DoubleWritable> incomingPageRanks,
       Context context) throws IOException, InterruptedException {
 
+    String rowkey = Bytes.toString(key.getBytes()).trim();
     double incomingPageRankSum = 0.0D;
     for (DoubleWritable incomingPageRank : incomingPageRanks) {
       incomingPageRankSum = incomingPageRankSum + incomingPageRank.get();
@@ -66,7 +67,7 @@ public class CalculatePageRankReducer extends
     double newPageRank =
         (dampingFactor * incomingPageRankSum) + ((1.0D - dampingFactor) / verticesTotalCnt);
 
-    double oldPageRank = getPageRank(context.getConfiguration(), key.getBytes());
+    double oldPageRank = getPageRank(context.getConfiguration(), Bytes.toBytes(rowkey));
     if (!pageRankEquals(oldPageRank, newPageRank)) {
       // collect pageRank changing count with counter
       context.getCounter(Counters.CHANGED_PAGE_RANK_COUNT).increment(1);

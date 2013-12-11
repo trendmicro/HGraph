@@ -53,6 +53,9 @@ public class Driver extends Configured implements Tool {
   private boolean importResults;
   private long pageRankThreshold = 0;
 
+  // for test usage
+  private String finalOutputPath;
+
   /**
    * Default constructor
    */
@@ -66,6 +69,13 @@ public class Driver extends Configured implements Tool {
    */
   protected Driver(Configuration conf) {
     super(conf);
+  }
+
+  /**
+   * @return the finalOutputPath
+   */
+  protected String getFinalOutputPath() {
+    return finalOutputPath;
   }
 
   /* (non-Javadoc)
@@ -156,12 +166,15 @@ public class Driver extends Configured implements Tool {
     Job job = null;
     boolean jobSucceed = false;
     long pageRankChangedCount = 0L;
+    String inputPath = null;
     while (!thresholdReached) {
       if (firstRun) {
         firstRun = false;
         job = createInitialPageRankJob(conf, outputBasePath);
+        inputPath = job.getConfiguration().get("mapred.output.dir");
       } else {
-        job = createInterMediatePageRankJob(conf, outputBasePath);
+        job = createInterMediatePageRankJob(conf, inputPath, outputBasePath);
+        inputPath = job.getConfiguration().get("mapred.output.dir");
       }
       jobSucceed = job.waitForCompletion(true);
       if (!jobSucceed) {
@@ -175,9 +188,11 @@ public class Driver extends Configured implements Tool {
           ", pageRankChangedCount:" + pageRankChangedCount);
       }
     }
+    // for test usage
+    this.finalOutputPath = inputPath;
 
     if (importResults) {
-      job = ImportPageRanks.createSubmittableJob(conf);
+      job = ImportPageRanks.createSubmittableJob(conf, inputPath);
       jobSucceed = job.waitForCompletion(true);
       if (!jobSucceed) {
         LOGGER.error("run job:" + job.getJobName() + " failed !!");
@@ -202,20 +217,22 @@ public class Driver extends Configured implements Tool {
     return value;
   }
 
-  private static Job createInterMediatePageRankJob(Configuration conf, String outputBasePath)
+  private static Job createInterMediatePageRankJob(Configuration conf, String inputPath, String outputBasePath)
       throws IOException {
     long timestamp = System.currentTimeMillis();
     Job job = null;
     String jobName = null;
     try {
-      jobName = "CalculateImtermediatePageRank_" + timestamp;
+      jobName = "CalculateIntermediatePageRank_" + timestamp;
       LOGGER.info("start to run job:" + jobName);
       job = new Job(conf, jobName);
       job.setJarByClass(Driver.class);
 
-      String inputPath = conf.get("mapred.output.dir");
       Validate.notEmpty(inputPath, "inputPath shall always not be empty");
       LOGGER.info("inputPath=" + inputPath);
+
+      // HBaseConfiguration.merge(job.getConfiguration(),
+      // HBaseConfiguration.create(job.getConfiguration()));
 
       FileInputFormat.setInputPaths(job, new Path(inputPath));
       job.setMapperClass(CalculateIntermediatePageRankMapper.class);
@@ -224,6 +241,8 @@ public class Driver extends Configured implements Tool {
       job.setMapOutputValueClass(DoubleWritable.class);
 
       job.setReducerClass(CalculatePageRankReducer.class);
+      job.setOutputKeyClass(BytesWritable.class);
+      job.setOutputValueClass(DoubleWritable.class);
       job.setOutputFormatClass(SequenceFileOutputFormat.class);
       String outputPath = outputBasePath + "/" + timestamp;
       LOGGER.info("outputPath=" + outputPath);
@@ -252,6 +271,8 @@ public class Driver extends Configured implements Tool {
       TableMapReduceUtil.initTableMapperJob(tableName, scan, CalculateInitPageRankMapper.class,
         BytesWritable.class, DoubleWritable.class, job);
       job.setReducerClass(CalculatePageRankReducer.class);
+      job.setOutputKeyClass(BytesWritable.class);
+      job.setOutputValueClass(DoubleWritable.class);
       job.setOutputFormatClass(SequenceFileOutputFormat.class);
       String outputPath = outputBasePath + "/" + timestamp;
       LOGGER.info("outputPath=" + outputPath);
