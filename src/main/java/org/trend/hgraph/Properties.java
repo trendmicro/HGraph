@@ -368,33 +368,36 @@ public class Properties {
           keyStr.length());
       keyStr = keyStr.substring(0, delIdx);
       value = kv.getValue();
-      if(String.class.getSimpleName().equals(typeStr)) {
-        type = String.class;
-        newValue = Bytes.toString(value);
-      } else if(Integer.class.getSimpleName().equals(typeStr)) {
-        type = Integer.class;
-        newValue = Bytes.toInt(value);
-      } else if(Long.class.getSimpleName().equals(typeStr)) {
-        type = Long.class;
-        newValue = Bytes.toLong(value);
-      } else if(Float.class.getSimpleName().equals(typeStr)) {
-        type = Float.class;
-        newValue = Bytes.toFloat(value);
-      } else if(Double.class.getSimpleName().equals(typeStr)) {
-        type = Double.class;
-        newValue = Bytes.toDouble(value);
-      } else if(Short.class.getSimpleName().equals(typeStr)) {
-        type = Short.class;
-        newValue = Bytes.toShort(value);
-      } else if(Boolean.class.getSimpleName().equals(typeStr)) {
-        type = Boolean.class;
-        newValue = Bytes.toBoolean(value);
-      } else if(BigDecimal.class.getSimpleName().equals(typeStr)) {
-        type = BigDecimal.class;
-        newValue = Bytes.toBigDecimal(value);
-      } else {
-        throw new UnsupportedDataTypeException("Not support data type for value:" + value);
-      }
+
+      type = String.class;
+      newValue = Bytes.toString(value);
+      // if(String.class.getSimpleName().equals(typeStr)) {
+      // type = String.class;
+      // // newValue = Bytes.toString(value);
+      // } else if(Integer.class.getSimpleName().equals(typeStr)) {
+      // type = Integer.class;
+      // // newValue = Bytes.toInt(value);
+      // } else if(Long.class.getSimpleName().equals(typeStr)) {
+      // type = Long.class;
+      // // newValue = Bytes.toLong(value);
+      // } else if(Float.class.getSimpleName().equals(typeStr)) {
+      // type = Float.class;
+      // // newValue = Bytes.toFloat(value);
+      // } else if(Double.class.getSimpleName().equals(typeStr)) {
+      // type = Double.class;
+      // // newValue = Bytes.toDouble(value);
+      // } else if(Short.class.getSimpleName().equals(typeStr)) {
+      // type = Short.class;
+      // // newValue = Bytes.toShort(value);
+      // } else if(Boolean.class.getSimpleName().equals(typeStr)) {
+      // type = Boolean.class;
+      // // newValue = Bytes.toBoolean(value);
+      // } else if(BigDecimal.class.getSimpleName().equals(typeStr)) {
+      // type = BigDecimal.class;
+      // // newValue = Bytes.toBigDecimal(value);
+      // } else {
+      // throw new UnsupportedDataTypeException("Not support data type for value:" + value);
+      // }
       
       this.addProperty(keyStr, type, newValue);
     }
