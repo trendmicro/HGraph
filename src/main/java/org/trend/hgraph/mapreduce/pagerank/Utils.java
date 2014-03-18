@@ -41,8 +41,8 @@ class Utils {
     put.add(
       Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
       Bytes.toBytes(columnQualifer
-          + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "Double"),
-      Bytes.toBytes(pageRank));
+          + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "String"),
+      Bytes.toBytes(("" + pageRank)));
     try {
       table.put(put);
     } catch (IOException e) {
@@ -70,10 +70,15 @@ class Utils {
         value.getValue(
           Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
           Bytes.toBytes(columnQualifer
-              + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "Double"));
+              + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "String"));
     double pageRank = 0.0D;
     if (null != colValue) {
-      pageRank = Bytes.toDouble(colValue);
+      try {
+        pageRank = Double.parseDouble(Bytes.toString(colValue));
+      } catch (NumberFormatException e) {
+        String rowkey = Bytes.toString(value.getRow());
+        System.err.println("parse pageRank failed for row:" + rowkey);
+      }
     }
     return pageRank;
   }

@@ -165,7 +165,7 @@ public class DriverTest extends AbstractHBaseGraphTest {
     createGraphTable(edgeTableName, cf);
 
     generateGraphDataTest("org/trend/hgraph/mapreduce/pagerank/vertex-test-01.data",
-      vertexTableName, Constants.PAGE_RANK_CQ_NAME, true);
+      vertexTableName, Constants.PAGE_RANK_CQ_NAME, false);
     generateGraphDataTest("org/trend/hgraph/mapreduce/pagerank/edge-test-01.data", edgeTableName,
       "dummy", false);
 

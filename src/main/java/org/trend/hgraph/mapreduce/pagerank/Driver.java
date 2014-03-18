@@ -167,7 +167,9 @@ public class Driver extends Configured implements Tool {
     boolean jobSucceed = false;
     long pageRankChangedCount = 0L;
     String inputPath = null;
+    long iterations = 1L;
     while (!thresholdReached) {
+      LOGGER.info("start to run interation:" + iterations);
       if (firstRun) {
         firstRun = false;
         job = createInitialPageRankJob(conf, outputBasePath);
@@ -177,15 +179,16 @@ public class Driver extends Configured implements Tool {
         inputPath = job.getConfiguration().get("mapred.output.dir");
       }
       jobSucceed = job.waitForCompletion(true);
+      iterations++;
       if (!jobSucceed) {
-        LOGGER.error("run job:" + job.getJobName() + " failed");
+        LOGGER.error("run job:" + job.getJobName() + " failed at iteration(s):" + iterations);
         return 1;
       }
       pageRankChangedCount = getPageRankChangedCount(job);
       if (pageRankChangedCount <= pageRankThreshold) {
         thresholdReached = true;
-        LOGGER.info("threshold reached, pageRankThreshold:" + pageRankThreshold,
-          ", pageRankChangedCount:" + pageRankChangedCount);
+        LOGGER.info("threshold reached, pageRankThreshold:" + pageRankThreshold +
+          ", pageRankChangedCount:" + pageRankChangedCount + ", iteration(s):" + iterations);
       }
     }
     // for test usage
