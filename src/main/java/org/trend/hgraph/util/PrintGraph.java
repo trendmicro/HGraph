@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.trend.hgraph.Graph;
+import org.trend.hgraph.HBaseGraphConstants;
 import org.trend.hgraph.HBaseGraphFactory;
 import org.trend.hgraph.Vertex;
 
@@ -27,7 +28,6 @@ public class PrintGraph extends Configured implements Tool {
 
   @Override
   public int run(String[] args) throws Exception {
-    String vertexId = null;
     int level = 1;
     if (null == args || args.length == 0) {
       System.err.println("No argument specified !!");
@@ -56,17 +56,33 @@ public class PrintGraph extends Configured implements Tool {
             return -1;
           }
         } else {
-          if (idx != args.length - 1) {
+          if (idx != args.length - 3) {
             System.err.println("The argument combination is wrong !!");
             printUsage();
             return -1;
           }
-          vertexId = args[idx];
+          break;
         }
         idx++;
       }
 
+      String vertexTableName = args[idx];
+      String edgeTableName = args[idx + 1];
+      String vertexId = args[idx + 2];
+
+      if ((null == vertexTableName || "".equals(vertexTableName))
+          && (null == edgeTableName || "".equals(edgeTableName))
+          && (null == vertexId || "".equals(vertexId))) {
+        System.err.println("one of the must arguments is null or empty string");
+        printUsage();
+        return -1;
+      }
+
       Graph graph = null;
+      Configuration conf = this.getConf();
+      conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, vertexTableName);
+      conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, edgeTableName);
+
       try {
         graph = HBaseGraphFactory.open(this.getConf());
         printGraph(graph, vertexId, level);
@@ -126,7 +142,8 @@ public class PrintGraph extends Configured implements Tool {
 
   private static void printUsage() {
     String name = PrintGraph.class.getSimpleName();
-    System.out.println("Usage: " + name + " [-l <level-to-print>] <vertex-id>");
+    System.out.println("Usage: " + name
+        + " [-l <level-to-print>] <vertex-table-name> <edge-table-name> <vertex-id>");
   }
 
   /**
