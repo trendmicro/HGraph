@@ -17,11 +17,10 @@
  */
 package org.trend.hgraph.mapreduce.pagerank;
 
-import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.collectOutgoingRowKeys;
 import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.dispatchPageRank;
+import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.getOutgoingRowKeysCount;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
@@ -56,12 +55,13 @@ public class CalculateIntermediatePageRankMapper extends
     double pageRank = value.get();
     // write current pageRank to tmp
     Utils.writePageRank(vertexTable, rowKey, tmpPageRankCq, pageRank);
-
-    List<String> outgoingRowKeys = null;
+    
+    Configuration conf = context.getConfiguration();
+    long outgoingRowKeyCount = 0L;
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTable, rowKey);
-    dispatchPageRank(outgoingRowKeys, pageRank,
+    outgoingRowKeyCount = getOutgoingRowKeysCount(conf, edgeTable, rowKey);
+    dispatchPageRank(outgoingRowKeyCount, pageRank, conf, edgeTable, rowKey,
       new ContextWriterStrategy() {
 
         @Override

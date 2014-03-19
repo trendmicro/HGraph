@@ -18,6 +18,7 @@
 package org.trend.hgraph.mapreduce.pagerank;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
@@ -40,6 +41,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trend.hgraph.HBaseGraphConstants;
+
 
 /**
  * A Drvier for running the pageRank program.
@@ -130,12 +132,13 @@ public class Driver extends Configured implements Tool {
     }
 
     if (startMustIdx + 3 != args.length) {
-      System.err.println("The must options not satified !!");
+      System.err.println("The must options not satisfied !!");
       printUsage();
       return 1;
     }
 
-    LOGGER.info("start to run " + this.getClass().getName() + " with options:" + args);
+    LOGGER.info("start to run " + this.getClass().getName() + " with options:"
+        + Arrays.toString(args));
 
     Configuration conf = getConf();
     String vertexTableName = args[startMustIdx];
@@ -152,6 +155,7 @@ public class Driver extends Configured implements Tool {
 
     // collect total vertices count
     if (includeVeticesTotalCount) {
+      LOGGER.info("start to collect vertices total count");
       int retCode = 0;
       retCode = collectVeticesTotalCount(conf, vertexTableName);
       if (retCode != 0) {

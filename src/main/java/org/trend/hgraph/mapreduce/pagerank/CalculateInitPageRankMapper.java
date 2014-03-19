@@ -18,9 +18,6 @@
 package org.trend.hgraph.mapreduce.pagerank;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
@@ -60,11 +57,13 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     double pageRank = Utils.getPageRank(value, Constants.PAGE_RANK_CQ_NAME);
     // write current pageRank to tmp
     Utils.writePageRank(vertexTable, rowKey, tmpPageRankCq, pageRank);
-    List<String> outgoingRowKeys = null;
+    long outgoingRowKeyCount = 0L;
+    Configuration conf = context.getConfiguration();
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeys = collectOutgoingRowKeys(context.getConfiguration(), edgeTable, rowKey);
-    dispatchPageRank(outgoingRowKeys, pageRank, new ContextWriterStrategy() {
+    outgoingRowKeyCount = getOutgoingRowKeysCount(conf, edgeTable, rowKey);
+    dispatchPageRank(outgoingRowKeyCount, pageRank, conf, edgeTable, rowKey,
+      new ContextWriterStrategy() {
       @Override
       public void write(String key, double value) throws IOException, InterruptedException {
         context.write(new BytesWritable(Bytes.toBytes(key)), new DoubleWritable(value));
@@ -72,39 +71,20 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     });
   }
 
-  static void dispatchPageRank(List<String> outgoingRowKeys, double pageRank,
-      ContextWriterStrategy strategy) throws IOException, InterruptedException {
+  static void dispatchPageRank(long outgoingRowKeyCount, double pageRank, Configuration conf,
+      HTable edgeTable, String rowKey, ContextWriterStrategy strategy) throws IOException,
+      InterruptedException {
+    double pageRankForEachOutgoing = pageRank / outgoingRowKeyCount;
+    long count = 0L;
     String outgoingRowKey = null;
-    double outgoingCnt = outgoingRowKeys.size();
-    double pageRankForEachOutgoing = pageRank / outgoingCnt;
-    for (Iterator<String> it = outgoingRowKeys.iterator(); it.hasNext();) {
-      outgoingRowKey = it.next();
-      strategy.write(outgoingRowKey, pageRankForEachOutgoing);
-    }
-  }
-
-  interface ContextWriterStrategy {
-    void write(String key, double value) throws IOException, InterruptedException;
-  }
-
-  static List<String> collectOutgoingRowKeys(Configuration conf, HTable edgeTable, String rowKey)
-      throws IOException {
-    String outgoingRowKey = null;
-    List<String> outgoingRowKeys = null;
     ResultScanner rs = null;
     try {
-      Scan scan = new Scan();
-
-      scan.setStartRow(Bytes.toBytes(rowKey
-          + HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1));
-      scan.setStopRow(Bytes.toBytes(rowKey + "~"));
-      scan.setFilter(new FirstKeyOnlyFilter());
-
+      Scan scan = getRowKeyOnlyScan(rowKey);
       rs = edgeTable.getScanner(scan);
-      outgoingRowKeys = new ArrayList<String>();
       for (Result r : rs) {
         outgoingRowKey = getOutgoingRowKey(r);
-        outgoingRowKeys.add(outgoingRowKey);
+        strategy.write(outgoingRowKey, pageRankForEachOutgoing);
+        count++;
       }
     } catch (IOException e) {
       System.err.println("access htable:" + Bytes.toString(edgeTable.getTableName()) + " failed");
@@ -113,7 +93,48 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     } finally {
       rs.close();
     }
-    return outgoingRowKeys;
+    // check count status whether correct
+    if (count != outgoingRowKeyCount) {
+      String msg =
+          "the count size not match for rowkey:" + rowKey + ", outgoingRowKeyCount:"
+              + outgoingRowKeyCount + ", count:" + count;
+      System.err.println(msg);
+      throw new IllegalStateException(msg);
+    }
+  }
+
+  private static Scan getRowKeyOnlyScan(String rowKey) {
+    Scan scan = new Scan();
+    scan.setStartRow(Bytes.toBytes(rowKey
+        + HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_DELIMITER_1));
+    scan.setStopRow(Bytes.toBytes(rowKey + "~"));
+    scan.setFilter(new FirstKeyOnlyFilter());
+    return scan;
+  }
+
+  interface ContextWriterStrategy {
+    void write(String key, double value) throws IOException, InterruptedException;
+  }
+
+  static long getOutgoingRowKeysCount(Configuration conf, HTable edgeTable, String rowKey)
+      throws IOException {
+    long count = 0L;
+    ResultScanner rs = null;
+    try {
+      Scan scan = getRowKeyOnlyScan(rowKey);
+
+      rs = edgeTable.getScanner(scan);
+      for (@SuppressWarnings("unused") Result r : rs) {
+        count++;
+      }
+    } catch (IOException e) {
+      System.err.println("access htable:" + Bytes.toString(edgeTable.getTableName()) + " failed");
+      e.printStackTrace(System.err);
+      throw e;
+    } finally {
+      rs.close();
+    }
+    return count;
   }
 
   private static String getOutgoingRowKey(Result r) {
