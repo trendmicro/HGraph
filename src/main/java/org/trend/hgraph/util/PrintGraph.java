@@ -18,7 +18,6 @@ import com.tinkerpop.blueprints.Edge;
 
 /**
  * @author scott_miao
- *
  */
 public class PrintGraph extends Configured implements Tool {
 
@@ -29,12 +28,12 @@ public class PrintGraph extends Configured implements Tool {
   @Override
   public int run(String[] args) throws Exception {
     int level = 1;
+    int idx = 0;
     if (null == args || args.length == 0) {
       System.err.println("No argument specified !!");
       printUsage();
       return -1;
     } else {
-      int idx = 0;
       String cmd = null;
       while (idx < args.length) {
         cmd = args[idx];
@@ -45,7 +44,7 @@ public class PrintGraph extends Configured implements Tool {
             try {
               level = Integer.parseInt(cmd);
             } catch (NumberFormatException e) {
-              System.err.println("Parge level from argument:" + cmd + " failed");
+              System.err.println("Parse level from argument:" + cmd + " failed");
               System.err.println("argument:" + cmd + " shall be a numeric value");
               printUsage();
               return -1;
@@ -65,34 +64,34 @@ public class PrintGraph extends Configured implements Tool {
         }
         idx++;
       }
+    }
 
-      String vertexTableName = args[idx];
-      String edgeTableName = args[idx + 1];
-      String vertexId = args[idx + 2];
+    String vertexTableName = args[idx];
+    String edgeTableName = args[idx + 1];
+    String vertexId = args[idx + 2];
 
-      if ((null == vertexTableName || "".equals(vertexTableName))
-          && (null == edgeTableName || "".equals(edgeTableName))
-          && (null == vertexId || "".equals(vertexId))) {
-        System.err.println("one of the must arguments is null or empty string");
-        printUsage();
-        return -1;
-      }
+    if ((null == vertexTableName || "".equals(vertexTableName))
+        && (null == edgeTableName || "".equals(edgeTableName))
+        && (null == vertexId || "".equals(vertexId))) {
+      System.err.println("one of the must arguments is null or empty string");
+      printUsage();
+      return -1;
+    }
 
-      Graph graph = null;
-      Configuration conf = this.getConf();
-      conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, vertexTableName);
-      conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, edgeTableName);
+    Graph graph = null;
+    Configuration conf = this.getConf();
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY, vertexTableName);
+    conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, edgeTableName);
 
-      try {
-        graph = HBaseGraphFactory.open(this.getConf());
-        printGraph(graph, vertexId, level);
-      } catch (Exception e) {
-        System.err.println("something wrong while printing graph:" + e);
-        e.printStackTrace();
-        throw e;
-      } finally {
-        graph.shutdown();
-      }
+    try {
+      graph = HBaseGraphFactory.open(this.getConf());
+      printGraph(graph, vertexId, level);
+    } catch (Exception e) {
+      System.err.println("something wrong while printing graph:" + e);
+      e.printStackTrace();
+      throw e;
+    } finally {
+      graph.shutdown();
     }
 
     return 0;
