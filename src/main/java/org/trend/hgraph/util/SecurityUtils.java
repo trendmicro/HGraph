@@ -23,6 +23,10 @@ public class SecurityUtils {
     return result;
   }
 
+  public static String getSha1(String str) {
+    return encrypt(str, "SHA1");
+  }
+
   private static String toHexString(byte[] in) {
     StringBuilder hexString = new StringBuilder();
     for (int i = 0; i < in.length; i++) {
