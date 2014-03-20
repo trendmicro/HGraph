@@ -18,6 +18,7 @@
 package org.trend.hgraph.mapreduce.pagerank;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -121,6 +122,33 @@ public class DriverTest extends AbstractHBaseGraphTest {
             "/pagerank-test-03" });
     assertEquals(0, retCode);
     printVertexPageRank("test.vertex-03");
+  }
+
+  @Test
+  public void testPageRank_import_totalCount_manually() throws Exception {
+    createGraphTables("test.vertex-05", "test.edge-05",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
+    Configuration conf = TEST_UTIL.getConfiguration();
+    Driver driver = new Driver(conf);
+    int retCode =
+        driver.run(new String[] { "-i", "-g", "3", "test.vertex-05", "test.edge-05",
+            "/pagerank-test-05" });
+    assertEquals(0, retCode);
+    printVertexPageRank("test.vertex-05");
+  }
+
+  @Test
+  public void testPageRank_import_totalCount_manually_fail() throws Exception {
+    createGraphTables("test.vertex-06", "test.edge-06",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
+    Configuration conf = TEST_UTIL.getConfiguration();
+    Driver driver = new Driver(conf);
+    int retCode =
+        driver.run(new String[] { "-i", "-g", "3", "-c", "test.vertex-06", "test.edge-06",
+            "/pagerank-test-06" });
+    assertTrue(0 != retCode);
   }
 
   @Test

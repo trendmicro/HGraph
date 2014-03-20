@@ -54,6 +54,7 @@ public class Driver extends Configured implements Tool {
   private boolean includeVeticesTotalCount;
   private boolean importResults;
   private long pageRankThreshold = 0;
+  private long verticesTotalCount = -1L;
 
   // for test usage
   private String finalOutputPath;
@@ -120,6 +121,16 @@ public class Driver extends Configured implements Tool {
             printUsage();
             return 1;
           }
+        } else if ("-g".equals(arg) || "--give-vertices-total-count".equals(arg)) {
+          a++;
+          String tmpArg = args[a];
+          try {
+            verticesTotalCount = Long.parseLong(tmpArg);
+          } catch (NumberFormatException e) {
+            System.err.println("parsing pageRank threshold failed, value:" + tmpArg);
+            printUsage();
+            return 1;
+          }
         } else {
           System.err.println("Not a defined option:" + arg);
           printUsage();
@@ -154,7 +165,7 @@ public class Driver extends Configured implements Tool {
     LOGGER.info("outputBasePath=" + outputBasePath);
 
     // collect total vertices count
-    if (includeVeticesTotalCount) {
+    if (includeVeticesTotalCount && verticesTotalCount == -1L) {
       LOGGER.info("start to collect vertices total count");
       int retCode = 0;
       retCode = collectVeticesTotalCount(conf, vertexTableName);
@@ -162,6 +173,16 @@ public class Driver extends Configured implements Tool {
         System.err.println("run vertices total count job failed, with retCode:" + retCode);
         return retCode;
       }
+    } else if (includeVeticesTotalCount && verticesTotalCount != -1L) {
+      System.err.println("can not use two options '-c' and '-g' in the same time");
+      printUsage();
+      return 1;
+    }
+
+    // user give the total count manually
+    if (verticesTotalCount > 0) {
+      conf.set(Constants.PAGE_RANK_VERTICES_TOTAL_COUNT_KEY, verticesTotalCount + "");
+      LOGGER.info(Constants.PAGE_RANK_VERTICES_TOTAL_COUNT_KEY + "=" + verticesTotalCount);
     }
 
     // run pageRank
@@ -332,11 +353,12 @@ public class Driver extends Configured implements Tool {
 
   private static final void printUsage() {
     System.err.println(Driver.class.getSimpleName()
-            + " Usage: [-c] [-i] [-t numeric] <vertex-table-name> <edge-table-name> <output-base-path>");
+            + " Usage: [-c | -g <total-count>] [-i] [-t numeric] <vertex-table-name> <edge-table-name> <output-base-path>");
     System.err.println("Run pageRank on the HBase for pre-defined HGraph schema");
     System.err.println("  -h, --help: print usage");
     System.err.println("  -t, --threshold: pageRank threshold, default is 0");
     System.err.println("  -c, --vertices-total-count: include the all vertices total count");
+    System.err.println("  -g, --give-vertices-total-count: user gives the all vertices total count manually");
     System.err.println("  -i, --import-result: import pageRank results to <vertex-table-name>, default is false");
   }
 
