@@ -19,6 +19,7 @@ package org.trend.hgraph.mapreduce.pagerank;
 
 import java.io.IOException;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
@@ -30,6 +31,7 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.mapreduce.Counter;
 import org.trend.hgraph.HBaseGraphConstants;
 
 /**
@@ -43,7 +45,9 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
   
   private String tmpPageRankCq = Constants.PAGE_RANK_CQ_TMP_NAME;
 
-  enum Counters {VERTEX_COUNT}
+  enum Counters {
+    VERTEX_COUNT, GET_OUTGOING_VERTICES_TIME_CONSUMED, DISPATCH_PR_TIME_CONSUMED
+  }
 
   /*
    * (non-Javadoc)
@@ -61,8 +65,11 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     Configuration conf = context.getConfiguration();
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeyCount = getOutgoingRowKeysCount(conf, edgeTable, rowKey);
+    outgoingRowKeyCount =
+        getOutgoingRowKeysCount(conf, edgeTable, rowKey,
+          context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
     dispatchPageRank(outgoingRowKeyCount, pageRank, conf, edgeTable, rowKey,
+      context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
       new ContextWriterStrategy() {
       @Override
       public void write(String key, double value) throws IOException, InterruptedException {
@@ -72,20 +79,26 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
   }
 
   static void dispatchPageRank(long outgoingRowKeyCount, double pageRank, Configuration conf,
-      HTable edgeTable, String rowKey, ContextWriterStrategy strategy) throws IOException,
+      HTable edgeTable, String rowKey, Counter counter, ContextWriterStrategy strategy)
+      throws IOException,
       InterruptedException {
     double pageRankForEachOutgoing = pageRank / outgoingRowKeyCount;
     long count = 0L;
     String outgoingRowKey = null;
     ResultScanner rs = null;
+    StopWatch sw = null;
     try {
       Scan scan = getRowKeyOnlyScan(rowKey);
+      sw = new StopWatch();
+      sw.start();
       rs = edgeTable.getScanner(scan);
       for (Result r : rs) {
         outgoingRowKey = getOutgoingRowKey(r);
         strategy.write(outgoingRowKey, pageRankForEachOutgoing);
         count++;
       }
+      sw.stop();
+      counter.increment(sw.getTime());
     } catch (IOException e) {
       System.err.println("access htable:" + Bytes.toString(edgeTable.getTableName()) + " failed");
       e.printStackTrace(System.err);
@@ -116,17 +129,22 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     void write(String key, double value) throws IOException, InterruptedException;
   }
 
-  static long getOutgoingRowKeysCount(Configuration conf, HTable edgeTable, String rowKey)
+  static long getOutgoingRowKeysCount(Configuration conf, HTable edgeTable, String rowKey,
+      Counter counter)
       throws IOException {
     long count = 0L;
     ResultScanner rs = null;
+    StopWatch sw = null;
     try {
       Scan scan = getRowKeyOnlyScan(rowKey);
-
+      sw = new StopWatch();
+      sw.start();
       rs = edgeTable.getScanner(scan);
       for (@SuppressWarnings("unused") Result r : rs) {
         count++;
       }
+      sw.stop();
+      counter.increment(sw.getTime());
     } catch (IOException e) {
       System.err.println("access htable:" + Bytes.toString(edgeTable.getTableName()) + " failed");
       e.printStackTrace(System.err);

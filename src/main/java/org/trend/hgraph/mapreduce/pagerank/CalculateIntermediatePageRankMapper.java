@@ -43,7 +43,9 @@ public class CalculateIntermediatePageRankMapper extends
   
   private String tmpPageRankCq = Constants.PAGE_RANK_CQ_TMP_NAME;
 
-  enum Counters {VERTEX_COUNT}
+  enum Counters {
+    VERTEX_COUNT, GET_OUTGOING_VERTICES_TIME_CONSUMED, DISPATCH_PR_TIME_CONSUMED
+  }
   /*
    * (non-Javadoc)
    * @see org.apache.hadoop.mapreduce.Mapper#map(java.lang.Object, java.lang.Object, Context)
@@ -60,8 +62,11 @@ public class CalculateIntermediatePageRankMapper extends
     long outgoingRowKeyCount = 0L;
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeyCount = getOutgoingRowKeysCount(conf, edgeTable, rowKey);
+    outgoingRowKeyCount =
+        getOutgoingRowKeysCount(conf, edgeTable, rowKey,
+          context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
     dispatchPageRank(outgoingRowKeyCount, pageRank, conf, edgeTable, rowKey,
+      context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
       new ContextWriterStrategy() {
 
         @Override

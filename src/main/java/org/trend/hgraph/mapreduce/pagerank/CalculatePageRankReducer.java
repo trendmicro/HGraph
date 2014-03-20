@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -39,7 +40,7 @@ public class CalculatePageRankReducer extends
     Reducer<BytesWritable, DoubleWritable, BytesWritable, DoubleWritable> {
   
   public static enum Counters {
-    CHANGED_PAGE_RANK_COUNT
+    CHANGED_PAGE_RANK_COUNT, CAL_NEW_PR_TIME_CONSUMED, CMP_OLD_NEW_PR_TIME_CONSUMED
   }
   
   private double verticesTotalCnt = 1.0D;
@@ -57,18 +58,26 @@ public class CalculatePageRankReducer extends
 
     String rowkey = Bytes.toString(key.getBytes()).trim();
     double incomingPageRankSum = 0.0D;
+    StopWatch sw = new StopWatch();
+    sw.start();
     for (DoubleWritable incomingPageRank : incomingPageRanks) {
       incomingPageRankSum = incomingPageRankSum + incomingPageRank.get();
     }
     // calculate new pageRank here
     double newPageRank =
         (dampingFactor * incomingPageRankSum) + ((1.0D - dampingFactor) / verticesTotalCnt);
-
+    sw.stop();
+    context.getCounter(Counters.CAL_NEW_PR_TIME_CONSUMED).increment(sw.getTime());
+    
+    sw.reset(); sw.start();
     double oldPageRank = Utils.getPageRank(vertexTable, rowkey, Constants.PAGE_RANK_CQ_TMP_NAME);
     if (!pageRankEquals(oldPageRank, newPageRank, pageRankCompareScale)) {
       // collect pageRank changing count with counter
       context.getCounter(Counters.CHANGED_PAGE_RANK_COUNT).increment(1);
     }
+    sw.stop();
+    context.getCounter(Counters.CMP_OLD_NEW_PR_TIME_CONSUMED).increment(sw.getTime());
+
     context.write(key, new DoubleWritable(newPageRank));
   }
 
