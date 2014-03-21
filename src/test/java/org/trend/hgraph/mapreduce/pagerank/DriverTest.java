@@ -165,6 +165,20 @@ public class DriverTest extends AbstractHBaseGraphTest {
     printVertexPageRank("test.vertex-04");
   }
 
+  @Test
+  public void testPageRank_import_iteration_5() throws Exception {
+    createGraphTables("test.vertex-07", "test.edge-07",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+
+    Configuration conf = TEST_UTIL.getConfiguration();
+    Driver driver = new Driver(conf);
+    int retCode =
+        driver.run(new String[] { "-i", "-e", "5", "test.vertex-07", "test.edge-07",
+            "/pagerank-test-07" });
+    assertEquals(0, retCode);
+    printVertexPageRank("test.vertex-07");
+  }
+
   private static void printVertexPageRank(String tableName) throws IOException {
     Configuration conf = TEST_UTIL.getConfiguration();
     HTable table = null;

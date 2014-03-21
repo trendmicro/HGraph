@@ -53,10 +53,11 @@ public class Driver extends Configured implements Tool {
 
   private boolean includeVeticesTotalCount;
   private boolean importResults;
-  private long pageRankThreshold = 0;
+  private long pageRankThreshold = 0L;
+  private long pageRankIterations = -1L;
   private long verticesTotalCount = -1L;
 
-  // for test usage
+  /** for test usage */
   private String finalOutputPath;
 
   /**
@@ -116,6 +117,16 @@ public class Driver extends Configured implements Tool {
           String tmpArg = args[a];
           try {
             pageRankThreshold = Long.parseLong(tmpArg);
+          } catch (NumberFormatException e) {
+            System.err.println("parsing pageRank threshold failed, value:" + tmpArg);
+            printUsage();
+            return 1;
+          }
+        } else if ("-e".equals(arg) || "".equals("--iteration")) {
+          a++;
+          String tmpArg = args[a];
+          try {
+            pageRankIterations = Long.parseLong(tmpArg);
           } catch (NumberFormatException e) {
             System.err.println("parsing pageRank threshold failed, value:" + tmpArg);
             printUsage();
@@ -186,14 +197,14 @@ public class Driver extends Configured implements Tool {
     }
 
     // run pageRank
-    boolean thresholdReached = false;
+    boolean exit = false;
     boolean firstRun = true;
     Job job = null;
     boolean jobSucceed = false;
     long pageRankChangedCount = 0L;
     String inputPath = null;
     long iterations = 1L;
-    while (!thresholdReached) {
+    while (!exit) {
       LOGGER.info("start to run interation:" + iterations);
       if (firstRun) {
         firstRun = false;
@@ -211,10 +222,17 @@ public class Driver extends Configured implements Tool {
       }
       pageRankChangedCount = getPageRankChangedCount(job);
       if (pageRankChangedCount <= pageRankThreshold) {
-        thresholdReached = true;
+        exit = true;
         LOGGER.info("threshold reached, pageRankThreshold:" + pageRankThreshold +
           ", pageRankChangedCount:" + pageRankChangedCount + ", iteration(s):" + iterations);
       }
+
+      if (pageRankIterations == iterations) {
+        exit = true;
+        LOGGER.info("iterations reached, iteration(s):" + iterations +
+          ", pageRankChangedCount:" + pageRankChangedCount);
+      }
+
     }
     // for test usage
     this.finalOutputPath = inputPath;
@@ -353,10 +371,11 @@ public class Driver extends Configured implements Tool {
 
   private static final void printUsage() {
     System.err.println(Driver.class.getSimpleName()
-            + " Usage: [-c | -g <total-count>] [-i] [-t numeric] <vertex-table-name> <edge-table-name> <output-base-path>");
+            + " Usage: [-c | -g <total-count>] [-i] [-t <threshold>] [-e <iteration>] <vertex-table-name> <edge-table-name> <output-base-path>");
     System.err.println("Run pageRank on the HBase for pre-defined HGraph schema");
     System.err.println("  -h, --help: print usage");
     System.err.println("  -t, --threshold: pageRank threshold, default is 0");
+    System.err.println("  -e, --iteration: pageRank iterations, default is unlimited");
     System.err.println("  -c, --vertices-total-count: include the all vertices total count");
     System.err.println("  -g, --give-vertices-total-count: user gives the all vertices total count manually");
     System.err.println("  -i, --import-result: import pageRank results to <vertex-table-name>, default is false");
