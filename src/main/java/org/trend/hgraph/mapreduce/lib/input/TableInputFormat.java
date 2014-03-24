@@ -56,7 +56,7 @@ public class TableInputFormat extends org.apache.hadoop.hbase.mapreduce.TableInp
   
   private static Logger LOGGER = LoggerFactory.getLogger(TableInputFormat.class);
 
-  private static final String INPUT_SPLIT_PAIRS_INPUT_PATH = "hgraph.mapreduce.lib.input.splits.path";
+  public static final String INPUT_SPLIT_PAIRS_INPUT_PATH = "hgraph.mapreduce.lib.input.splits.path";
   private String inputPath;
 
   @Override
