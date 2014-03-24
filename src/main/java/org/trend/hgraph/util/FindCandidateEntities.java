@@ -132,9 +132,11 @@ public class FindCandidateEntities extends Configured implements Tool {
     String rowkey = null;
 
     try {
+      System.out.print("start to find candidates");
       table = new HTable(conf, vertexTableName);
       rs = table.getScanner(scan);
       for (Result r : rs) {
+        System.out.print(".");
         rowkey = Bytes.toString(r.getRow());
         if (isTarget(graph, rowkey, num)) {
           printOutTargets(graph, rowkey, num, vertexOutputFile, edgeOutputFile);
