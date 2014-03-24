@@ -18,9 +18,10 @@
 package org.trend.hgraph.mapreduce.pagerank;
 
 import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.dispatchPageRank;
-import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.getOutgoingRowKeysCount;
+import static org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.getOutgoingRowKeys;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
@@ -59,16 +60,15 @@ public class CalculateIntermediatePageRankMapper extends
     Utils.writePageRank(vertexTable, rowKey, tmpPageRankCq, pageRank);
     
     Configuration conf = context.getConfiguration();
-    long outgoingRowKeyCount = 0L;
+    List<String> outgoingRowKeys = null;
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeyCount =
-        getOutgoingRowKeysCount(conf, edgeTable, rowKey,
+    outgoingRowKeys =
+        getOutgoingRowKeys(conf, edgeTable, rowKey,
           context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
-    dispatchPageRank(outgoingRowKeyCount, pageRank, conf, edgeTable, rowKey,
+    dispatchPageRank(outgoingRowKeys, pageRank, conf, edgeTable,
       context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
       new ContextWriterStrategy() {
-
         @Override
         public void write(String key, double value) throws IOException, InterruptedException {
           context.write(new BytesWritable(Bytes.toBytes(key)), new DoubleWritable(value));

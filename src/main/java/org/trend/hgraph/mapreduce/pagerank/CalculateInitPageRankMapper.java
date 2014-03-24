@@ -18,6 +18,8 @@
 package org.trend.hgraph.mapreduce.pagerank;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
@@ -61,14 +63,14 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     double pageRank = Utils.getPageRank(value, Constants.PAGE_RANK_CQ_NAME);
     // write current pageRank to tmp
     Utils.writePageRank(vertexTable, rowKey, tmpPageRankCq, pageRank);
-    long outgoingRowKeyCount = 0L;
+    List<String> outgoingRowKeys = null;
     Configuration conf = context.getConfiguration();
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
-    outgoingRowKeyCount =
-        getOutgoingRowKeysCount(conf, edgeTable, rowKey,
+    outgoingRowKeys =
+        getOutgoingRowKeys(conf, edgeTable, rowKey,
           context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
-    dispatchPageRank(outgoingRowKeyCount, pageRank, conf, edgeTable, rowKey,
+    dispatchPageRank(outgoingRowKeys, pageRank, conf, edgeTable,
       context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
       new ContextWriterStrategy() {
       @Override
@@ -78,41 +80,30 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     });
   }
 
-  static void dispatchPageRank(long outgoingRowKeyCount, double pageRank, Configuration conf,
-      HTable edgeTable, String rowKey, Counter counter, ContextWriterStrategy strategy)
+  static void dispatchPageRank(List<String> outgoingRowKeys, double pageRank, Configuration conf,
+      HTable edgeTable, Counter counter, ContextWriterStrategy strategy)
       throws IOException,
       InterruptedException {
-    double pageRankForEachOutgoing = pageRank / outgoingRowKeyCount;
-    long count = 0L;
-    String outgoingRowKey = null;
-    ResultScanner rs = null;
+    double pageRankForEachOutgoing = pageRank / (double) outgoingRowKeys.size();
     StopWatch sw = null;
+    String outgoingRowKey = null;
     try {
-      Scan scan = getRowKeyOnlyScan(rowKey);
       sw = new StopWatch();
       sw.start();
-      rs = edgeTable.getScanner(scan);
-      for (Result r : rs) {
-        outgoingRowKey = getOutgoingRowKey(r);
+      for (int a = 0; a < outgoingRowKeys.size(); a++) {
+        outgoingRowKey = outgoingRowKeys.get(a);
         strategy.write(outgoingRowKey, pageRankForEachOutgoing);
-        count++;
       }
       sw.stop();
       counter.increment(sw.getTime());
     } catch (IOException e) {
-      System.err.println("access htable:" + Bytes.toString(edgeTable.getTableName()) + " failed");
+      System.err.println("failed while writing outgoingRowKey:" + outgoingRowKey);
       e.printStackTrace(System.err);
       throw e;
-    } finally {
-      rs.close();
-    }
-    // check count status whether correct
-    if (count != outgoingRowKeyCount) {
-      String msg =
-          "the count size not match for rowkey:" + rowKey + ", outgoingRowKeyCount:"
-              + outgoingRowKeyCount + ", count:" + count;
-      System.err.println(msg);
-      throw new IllegalStateException(msg);
+    } catch (InterruptedException e) {
+      System.err.println("failed while writing outgoingRowKey:" + outgoingRowKey);
+      e.printStackTrace(System.err);
+      throw e;
     }
   }
 
@@ -129,19 +120,19 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     void write(String key, double value) throws IOException, InterruptedException;
   }
 
-  static long getOutgoingRowKeysCount(Configuration conf, HTable edgeTable, String rowKey,
+  static List<String> getOutgoingRowKeys(Configuration conf, HTable edgeTable, String rowKey,
       Counter counter)
       throws IOException {
-    long count = 0L;
     ResultScanner rs = null;
+    List<String> rowKeys = new ArrayList<String>();
     StopWatch sw = null;
     try {
       Scan scan = getRowKeyOnlyScan(rowKey);
       sw = new StopWatch();
       sw.start();
       rs = edgeTable.getScanner(scan);
-      for (@SuppressWarnings("unused") Result r : rs) {
-        count++;
+      for (Result r : rs) {
+        rowKeys.add(getOutgoingRowKey(r));
       }
       sw.stop();
       counter.increment(sw.getTime());
@@ -152,7 +143,7 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
     } finally {
       rs.close();
     }
-    return count;
+    return rowKeys;
   }
 
   private static String getOutgoingRowKey(Result r) {
