@@ -47,6 +47,10 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
 
   private HTable vertexTable = null;
 
+  enum Counters {
+    ROW_COUNT
+  }
+
   @Override
   protected void reduce(Text regionKey, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
@@ -111,6 +115,7 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
       // write one regionName, startRowKey and endRowKey pair
       context.write(new Text(regionName + DELIMITER + startRowKey + DELIMITER + endRowKey),
         NullWritable.get());
+      context.getCounter(Counters.ROW_COUNT).increment(1L);
     }
 
     // do housekeeping
