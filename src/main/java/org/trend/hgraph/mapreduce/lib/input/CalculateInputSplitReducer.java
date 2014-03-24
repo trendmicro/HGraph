@@ -23,6 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -35,22 +39,31 @@ import org.apache.hadoop.mapreduce.Reducer;
  */
 public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWritable> {
 
-  private static final String DELIMITER = "\t";
+  static final String DELIMITER = "\t";
 
-  public static String MAPPERS_FOR_ONE_REGION = "hgraph.mapreduce.pagerank.mappers.one.region";
-  public static int MAPPERS_FOR_ONE_REGION_DEFAULT_VALUE = 3;
+  public static final String MAPPERS_FOR_ONE_REGION = "hgraph.mapreduce.lib.input.mappers.one.region";
+  public static final int MAPPERS_FOR_ONE_REGION_DEFAULT_VALUE = 3;
   private int mappersForOneRegion = MAPPERS_FOR_ONE_REGION_DEFAULT_VALUE;
+
+  private HTable vertexTable = null;
 
   @Override
   protected void reduce(Text regionKey, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
     String regionName = Bytes.toString(regionKey.getBytes()).trim();
     List<String> rowKeys = new ArrayList<String>();
+    HRegionLocation location = null;
     int count = 0;
     for (Text rowKey : values) {
       rowKeys.add(Bytes.toString(rowKey.getBytes()).trim());
+      if (count == 0) {
+        location = vertexTable.getRegionLocation(rowKey.getBytes(), false);
+      }
       count++;
     }
+
+    // for debugging
+    // System.out.println("rowKeys=" + rowKeys);
 
     if (mappersForOneRegion > count) {
       throw new IllegalArgumentException(MAPPERS_FOR_ONE_REGION
@@ -79,14 +92,22 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
     int idx = 0;
     String startRowKey = null;
     String endRowKey = null;
+    byte[] endKey = location.getRegionInfo().getEndKey();
     for (int a = 0; a < bucketsForEachMapper.length; a++) {
       buckets = bucketsForEachMapper[a];
       startRowKey = rowKeys.get(idx);
       if ((a + 1) == bucketsForEachMapper.length) {
-        buckets -= 1;
+        if (!Arrays.equals(HConstants.EMPTY_END_ROW, endKey)) {
+          endRowKey = Bytes.toString(endKey);
+        } else {
+          idx = idx + buckets - 1;
+          endRowKey = rowKeys.get(idx);
+        }
+      } else {
+        idx = idx + buckets;
+        endRowKey = rowKeys.get(idx);
       }
-      idx = idx + buckets;
-      endRowKey = rowKeys.get(idx);
+      
       // write one regionName, startRowKey and endRowKey pair
       context.write(new Text(regionName + DELIMITER + startRowKey + DELIMITER + endRowKey),
         NullWritable.get());
@@ -98,9 +119,21 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
   }
 
   @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    vertexTable.close();
+  }
+
+  @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
     mappersForOneRegion = conf.getInt(MAPPERS_FOR_ONE_REGION, mappersForOneRegion);
+
+    String vertexTableName = conf.get(TableInputFormat.INPUT_TABLE);
+    if (null == vertexTableName || "".equals(vertexTableName)) {
+      throw new IllegalArgumentException(TableInputFormat.INPUT_TABLE
+          + " shall not be empty or null");
+    }
+    vertexTable = new HTable(conf, vertexTableName);
   }
 
 }

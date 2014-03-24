@@ -18,9 +18,7 @@
 package org.trend.hgraph.mapreduce.lib.input;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -30,9 +28,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
 
 
 /**
@@ -42,8 +38,8 @@ import org.apache.hadoop.mapreduce.Counter;
  */
 public class CalculateInputSplitMapper extends TableMapper<Text, Text> {
 
-  public static String BY_PASS_KEYS = "hgraph.mapreduce.pagerank.mappers.bypass.keys";
-  public static int BY_PASS_KEYS_DEFAULT_VALUE = 1000;
+  public static final String BY_PASS_KEYS = "hgraph.mapreduce.lib.input.mappers.bypass.keys";
+  public static final int BY_PASS_KEYS_DEFAULT_VALUE = 1000;
 
   enum Counters {
     ROW_COUNT, COLLECT_ROW_COUNT
@@ -54,13 +50,18 @@ public class CalculateInputSplitMapper extends TableMapper<Text, Text> {
   private String regionEncodedName = null;
   private HTable vertexTable = null;
 
-  private List<String> rowKeys = new ArrayList<String>();
+  long totalCount = 0L;
 
   @Override
   protected void map(ImmutableBytesWritable key, Result value, Context context) throws IOException,
       InterruptedException {
-    Counter counter = context.getCounter(Counters.ROW_COUNT);
-    counter.increment(1L);
+    context.getCounter(Counters.ROW_COUNT).increment(1L);
+    totalCount++;
+    boolean toWrite = true;
+
+    // for debugging
+    // String rowKey = Bytes.toString(key.get());
+    // System.out.println("processing rowKey:" + rowKey);
 
     HRegionInfo info = vertexTable.getRegionLocation(key.get(), false).getRegionInfo();
     String encodedName = info.getEncodedName();
@@ -68,13 +69,16 @@ public class CalculateInputSplitMapper extends TableMapper<Text, Text> {
       // first run
       // store regionEncodedName for subsequent use
       regionEncodedName = encodedName;
+
       // collect the start rowKey as well
       byte[] startKey = info.getStartKey();
-      if (!Arrays.equals(HConstants.EMPTY_BYTE_ARRAY, startKey)) {
+      if (!Arrays.equals(HConstants.EMPTY_START_ROW, startKey)) {
         context.write(new Text(regionEncodedName), new Text(startKey));
         context.getCounter(Counters.COLLECT_ROW_COUNT).increment(1L);
+        toWrite = false;
       }
     } else {
+      toWrite = false;
       if (!regionEncodedName.equals(encodedName)) {
         throw new IllegalStateException(
             "This mapper span multiple regions, it is not the expected status !!\n"
@@ -83,17 +87,15 @@ public class CalculateInputSplitMapper extends TableMapper<Text, Text> {
       }
     }
 
-    long totalCount = counter.getValue();
     byte[] endKey = info.getEndKey();
     // hit the rowkey we want to collect
-    if ((totalCount % bypassKeys == 0 && !Arrays.equals(endKey, key.get()))) {
-      rowKeys.add(Bytes.toString(key.get()));
+    if (toWrite || (totalCount % bypassKeys == 0 && !Arrays.equals(endKey, key.get()))) {
       context.write(new Text(regionEncodedName), new Text(key.get()));
       context.getCounter(Counters.COLLECT_ROW_COUNT).increment(1L);
     }
 
     // hit the end rowKey
-    if (Arrays.equals(endKey, key.get()) && !Arrays.equals(HConstants.EMPTY_BYTE_ARRAY, key.get())) {
+    if (Arrays.equals(endKey, key.get()) && !Arrays.equals(HConstants.EMPTY_END_ROW, key.get())) {
       context.write(new Text(regionEncodedName), new Text(key.get()));
       context.getCounter(Counters.COLLECT_ROW_COUNT).increment(1L);
     }
