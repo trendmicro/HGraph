@@ -25,7 +25,10 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.mapreduce.Job;
+import org.slf4j.Logger;
 import org.trend.hgraph.HBaseGraphConstants;
 
 /**
@@ -97,6 +100,24 @@ class Utils {
       throw e;
     }
     return table;
+  }
+
+  /**
+   * Set token if authentication enabled.
+   * @param job
+   */
+  static void setAuthenticationToken(Job job, Logger logger) {
+    if (User.isSecurityEnabled()) {
+      try {
+        User.getCurrent().obtainAuthTokenForJob(job.getConfiguration(), job);
+      } catch (IOException e) {
+        String msg = job.getJobName() + ": Failed to obtain current user.";
+        logger.error(msg);
+        throw new IllegalStateException(msg, e);
+      } catch (InterruptedException ie) {
+        logger.warn(job.getJobName() + ": Interrupted obtaining user authentication token");
+      }
+    }
   }
 
 }

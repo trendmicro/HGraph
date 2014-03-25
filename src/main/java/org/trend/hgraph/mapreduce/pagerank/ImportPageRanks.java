@@ -52,7 +52,7 @@ public class ImportPageRanks extends Configured implements Tool {
   private static class ImportPageRanksMapper extends
       Mapper<BytesWritable, DoubleWritable, BytesWritable, DoubleWritable> {
 
-    private String vertexTableName;
+    private HTable vertexTable;
 
     /*
      * (non-Javadoc)
@@ -62,25 +62,26 @@ public class ImportPageRanks extends Configured implements Tool {
     @Override
     protected void map(BytesWritable key, DoubleWritable value, Context context)
         throws IOException, InterruptedException {
-      HTable table = null;
       Put put = null;
       String rowKey = Bytes.toString(key.getBytes()).trim();
       try {
-        table = new HTable(context.getConfiguration(), vertexTableName);
         put = new Put(Bytes.toBytes(rowKey));
         put.add(
           Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
           Bytes.toBytes(Constants.PAGE_RANK_CQ_NAME
               + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "Double"),
           Bytes.toBytes(value.get()));
-        table.put(put);
+        vertexTable.put(put);
       } catch (IOException e) {
         System.err.println("import pageRank failed !!");
         e.printStackTrace(System.err);
         throw e;
-      } finally {
-        if (null != table) table.close();
       }
+    }
+
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+      vertexTable.close();
     }
 
     /*
@@ -89,9 +90,10 @@ public class ImportPageRanks extends Configured implements Tool {
      */
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-      vertexTableName =
+      String vertexTableName =
           context.getConfiguration().get(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY);
       Validate.notEmpty(vertexTableName, "vertexTableName shall always not be empty");
+      vertexTable = new HTable(context.getConfiguration(), vertexTableName);
     }
 
   }
@@ -164,6 +166,8 @@ public class ImportPageRanks extends Configured implements Tool {
       // only mapper
       job.setOutputFormatClass(NullOutputFormat.class);
       job.setNumReduceTasks(0);
+
+      Utils.setAuthenticationToken(job, LOGGER);
     } catch (IOException e) {
       LOGGER.error("run " + jobName + " failed", e);
       throw e;

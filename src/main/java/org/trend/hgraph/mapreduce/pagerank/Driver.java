@@ -50,7 +50,7 @@ import org.trend.hgraph.HBaseGraphConstants;
  */
 public class Driver extends Configured implements Tool {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Driver.class);
+  static final Logger LOGGER = LoggerFactory.getLogger(Driver.class);
 
   private boolean includeVeticesTotalCount;
   private boolean importResults;
@@ -216,8 +216,9 @@ public class Driver extends Configured implements Tool {
     boolean jobSucceed = false;
     long pageRankChangedCount = 0L;
     String inputPath = null;
-    long iterations = 1L;
+    long iterations = 0L;
     while (!exit) {
+      iterations++;
       LOGGER.info("start to run interation:" + iterations);
       if (firstRun) {
         firstRun = false;
@@ -228,7 +229,6 @@ public class Driver extends Configured implements Tool {
         inputPath = job.getConfiguration().get("mapred.output.dir");
       }
       jobSucceed = job.waitForCompletion(true);
-      iterations++;
       if (!jobSucceed) {
         LOGGER.error("run job:" + job.getJobName() + " failed at iteration(s):" + iterations);
         return 1;
@@ -245,7 +245,6 @@ public class Driver extends Configured implements Tool {
         LOGGER.info("iterations reached, iteration(s):" + iterations +
           ", pageRankChangedCount:" + pageRankChangedCount);
       }
-
     }
     // for test usage
     this.finalOutputPath = inputPath;
@@ -306,6 +305,9 @@ public class Driver extends Configured implements Tool {
       String outputPath = outputBasePath + "/" + timestamp;
       LOGGER.info("outputPath=" + outputPath);
       FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+      Utils.setAuthenticationToken(job, LOGGER);
+
     } catch (IOException e) {
       LOGGER.error("run " + jobName + " failed", e);
       throw e;
