@@ -72,8 +72,8 @@ public class TableInputFormat extends org.apache.hadoop.hbase.mapreduce.TableInp
       HTable table = getHTable();
       byte[] tableName = table.getTableName();
 
-      fs = FileSystem.get(getConf());
       Path path = new Path(inputPath);
+      fs = path.getFileSystem(this.getConf());
       is = fs.open(path);
       it = IOUtils.lineIterator(is, "UTF-8");
       String line = null;
@@ -187,9 +187,6 @@ public class TableInputFormat extends org.apache.hadoop.hbase.mapreduce.TableInp
       }
       if (null != is) {
         IOUtils.closeQuietly(is);
-      }
-      if (null != fs) {
-        fs.close();
       }
     }
 
