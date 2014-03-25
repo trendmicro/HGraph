@@ -42,6 +42,12 @@ import org.trend.hgraph.HBaseGraphConstants;
  */
 public class LocalPrTest {
 
+  private static final String TEST_DATA_EDGE_01 = "org/trend/hgraph/mapreduce/pagerank/edge-test-01.data";
+  private static final String TEST_DATA_VERTEX_01 = "org/trend/hgraph/mapreduce/pagerank/vertex-test-01.data";
+  
+  private static final String TEST_DATA_EDGE_02 = "org/trend/hgraph/mapreduce/pagerank/edge-test-02.data";
+  private static final String TEST_DATA_VERTEX_02 = "org/trend/hgraph/mapreduce/pagerank/vertex-test-02.data";
+  
   /**
    * @throws java.lang.Exception
    */
@@ -71,8 +77,18 @@ public class LocalPrTest {
   }
 
   @Test
-  public void test() {
-    List<V> vs = generateVs();
+  public void testData_1() {
+    List<V> vs = generateVs(TEST_DATA_VERTEX_01, TEST_DATA_EDGE_01);
+    runPr(vs);
+  }
+  
+  @Test
+  public void testData_2() {
+    List<V> vs = generateVs(TEST_DATA_VERTEX_02, TEST_DATA_EDGE_02);
+    runPr(vs);
+  }
+
+  private void runPr(List<V> vs) {
     int prChanged = 0;
     int round = 0;
     do {
@@ -110,10 +126,9 @@ public class LocalPrTest {
     } while (prChanged > 0);
   }
 
-  private static List<V> generateVs() {
+  private static List<V> generateVs(String vertexData, String edgeData) {
     InputStream data =
-        DriverTest.class.getClassLoader().getResourceAsStream(
-          "org/trend/hgraph/mapreduce/pagerank/vertex-test-01.data");
+ DriverTest.class.getClassLoader().getResourceAsStream(vertexData);
     LineIterator it = IOUtils.lineIterator(new InputStreamReader(data));
 
     // load all Vs
@@ -135,9 +150,7 @@ public class LocalPrTest {
     IOUtils.closeQuietly(data);
 
     // build adjacency list
-    data =
-        DriverTest.class.getClassLoader().getResourceAsStream(
-          "org/trend/hgraph/mapreduce/pagerank/edge-test-01.data");
+    data = DriverTest.class.getClassLoader().getResourceAsStream(edgeData);
     it = IOUtils.lineIterator(new InputStreamReader(data));
     while (it.hasNext()) {
       record = it.next();

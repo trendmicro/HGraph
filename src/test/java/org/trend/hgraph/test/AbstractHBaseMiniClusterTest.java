@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.ImportTsv;
+import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.GenericOptionsParser;
@@ -208,5 +209,39 @@ public abstract class AbstractHBaseMiniClusterTest {
 				
 				importLocalFile2Table(conf, args, tableName, inputFileName);
 			}
+
+  protected static void splitTable(String tableName, String... splits) throws InterruptedException,
+      IOException {
+        // split table
+        if (null != splits && splits.length > 0) {
+          // wait for the table settle down
+          Thread.sleep(6000);
+          MiniHBaseCluster cluster = TEST_UTIL.getMiniHBaseCluster();
+          HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
+          byte[] table = Bytes.toBytes(tableName);
+          List<HRegion> regions = null;
+          for (int a = 0; a < splits.length; a++) {
+            try {
+              // split
+              admin.split(table, Bytes.toBytes(splits[a]));
+            } catch (InterruptedException e) {
+              System.err.println("split table failed");
+              e.printStackTrace(System.err);
+              throw e;
+            }
+            Thread.sleep(6000);
+      
+            regions = cluster.getRegions(table);
+            for (HRegion region : regions) {
+              while (!region.isAvailable()) {
+                // wait region online
+              }
+              System.out.println("region:" + region);
+              System.out.println("startKey:" + Bytes.toString(region.getStartKey()));
+              System.out.println("endKey:" + Bytes.toString(region.getEndKey()));
+            }
+          }
+        }
+      }
 
 }

@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.RowCounter;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
@@ -56,6 +57,7 @@ public class Driver extends Configured implements Tool {
   private long pageRankThreshold = 0L;
   private long pageRankIterations = -1L;
   private long verticesTotalCount = -1L;
+  private String inputSplitsPath = null;
 
   /** for test usage */
   private String finalOutputPath;
@@ -142,6 +144,9 @@ public class Driver extends Configured implements Tool {
             printUsage();
             return 1;
           }
+        } else if ("-p".equals(arg) || "--input-splits-path".equals(arg)) {
+          a++;
+          inputSplitsPath = args[a];
         } else {
           System.err.println("Not a defined option:" + arg);
           printUsage();
@@ -163,6 +168,7 @@ public class Driver extends Configured implements Tool {
         + Arrays.toString(args));
 
     Configuration conf = getConf();
+    Class<? extends TableInputFormat> tableInputFormat = TableInputFormat.class;
     String vertexTableName = args[startMustIdx];
     String edgeTableName = args[startMustIdx + 1];
     String outputBasePath = args[startMustIdx + 2];
@@ -196,6 +202,13 @@ public class Driver extends Configured implements Tool {
       LOGGER.info(Constants.PAGE_RANK_VERTICES_TOTAL_COUNT_KEY + "=" + verticesTotalCount);
     }
 
+    // user give a inputSplitPath for customized TableInputFormat
+    if (null != inputSplitsPath && !"".equals(inputSplitsPath)) {
+      tableInputFormat = org.trend.hgraph.mapreduce.lib.input.TableInputFormat.class;
+      conf.set(org.trend.hgraph.mapreduce.lib.input.TableInputFormat.INPUT_SPLIT_PAIRS_INPUT_PATH,
+        inputSplitsPath);
+    }
+
     // run pageRank
     boolean exit = false;
     boolean firstRun = true;
@@ -208,7 +221,7 @@ public class Driver extends Configured implements Tool {
       LOGGER.info("start to run interation:" + iterations);
       if (firstRun) {
         firstRun = false;
-        job = createInitialPageRankJob(conf, outputBasePath);
+        job = createInitialPageRankJob(conf, outputBasePath, tableInputFormat);
         inputPath = job.getConfiguration().get("mapred.output.dir");
       } else {
         job = createInterMediatePageRankJob(conf, inputPath, outputBasePath);
@@ -300,7 +313,8 @@ public class Driver extends Configured implements Tool {
     return job;
   }
 
-  private static Job createInitialPageRankJob(Configuration conf, String outputBasePath)
+  private static Job createInitialPageRankJob(Configuration conf, String outputBasePath,
+      Class<? extends TableInputFormat> tableInputFormat)
       throws IOException {
     String tableName = conf.get(HBaseGraphConstants.HBASE_GRAPH_TABLE_VERTEX_NAME_KEY);
     long timestamp = System.currentTimeMillis();
@@ -315,7 +329,8 @@ public class Driver extends Configured implements Tool {
       Scan scan = new Scan();
 
       TableMapReduceUtil.initTableMapperJob(tableName, scan, CalculateInitPageRankMapper.class,
-        BytesWritable.class, DoubleWritable.class, job);
+        BytesWritable.class, DoubleWritable.class, job, true, tableInputFormat);
+
       job.setReducerClass(CalculatePageRankReducer.class);
       job.setOutputKeyClass(BytesWritable.class);
       job.setOutputValueClass(DoubleWritable.class);
@@ -371,7 +386,7 @@ public class Driver extends Configured implements Tool {
 
   private static final void printUsage() {
     System.err.println(Driver.class.getSimpleName()
-            + " Usage: [-c | -g <total-count>] [-i] [-t <threshold>] [-e <iteration>] <vertex-table-name> <edge-table-name> <output-base-path>");
+            + " Usage: [-c | -g <total-count>] [-p <input-splits-path>] [-i] [-t <threshold>] [-e <iteration>] <vertex-table-name> <edge-table-name> <output-base-path>");
     System.err.println("Run pageRank on the HBase for pre-defined HGraph schema");
     System.err.println("  -h, --help: print usage");
     System.err.println("  -t, --threshold: pageRank threshold, default is 0");
@@ -379,6 +394,7 @@ public class Driver extends Configured implements Tool {
     System.err.println("  -c, --vertices-total-count: include the all vertices total count");
     System.err.println("  -g, --give-vertices-total-count: user gives the all vertices total count manually");
     System.err.println("  -i, --import-result: import pageRank results to <vertex-table-name>, default is false");
+    System.err.println("  -p, --input-splits-path: enabled customized TableInputFormat by given file path");
   }
 
   /**

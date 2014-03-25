@@ -52,6 +52,12 @@ import org.trend.hgraph.test.AbstractHBaseMiniClusterTest;
  */
 public class DriverTest extends AbstractHBaseGraphTest {
 
+  private static final String TEST_DATA_EDGE_01 = "org/trend/hgraph/mapreduce/pagerank/edge-test-01.data";
+  private static final String TEST_DATA_VERTEX_01 = "org/trend/hgraph/mapreduce/pagerank/vertex-test-01.data";
+  
+  private static final String TEST_DATA_EDGE_02 = "org/trend/hgraph/mapreduce/pagerank/edge-test-02.data";
+  private static final String TEST_DATA_VERTEX_02 = "org/trend/hgraph/mapreduce/pagerank/vertex-test-02.data";
+  
   private static final String CF_PROPERTY =
       HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME;
   private static final String CQ_DEL =
@@ -78,7 +84,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_default() throws Exception {
     createGraphTables("test.vertex-01", "test.edge-01",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -99,7 +106,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_import() throws Exception {
     createGraphTables("test.vertex-02", "test.edge-02",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -112,7 +120,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_import_totalCount() throws Exception {
     createGraphTables("test.vertex-03", "test.edge-03",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -127,7 +136,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_import_totalCount_manually() throws Exception {
     createGraphTables("test.vertex-05", "test.edge-05",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -141,7 +151,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_import_totalCount_manually_fail() throws Exception {
     createGraphTables("test.vertex-06", "test.edge-06",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -154,7 +165,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_import_threshold_2() throws Exception {
     createGraphTables("test.vertex-04", "test.edge-04",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -168,7 +180,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
   @Test
   public void testPageRank_import_iteration_5() throws Exception {
     createGraphTables("test.vertex-07", "test.edge-07",
-      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME);
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_01,
+      TEST_DATA_EDGE_01);
 
     Configuration conf = TEST_UTIL.getConfiguration();
     Driver driver = new Driver(conf);
@@ -177,6 +190,33 @@ public class DriverTest extends AbstractHBaseGraphTest {
             "/pagerank-test-07" });
     assertEquals(0, retCode);
     printVertexPageRank("test.vertex-07");
+  }
+
+  @Test
+  public void testPageRank_import_totalCount_manual_inputsplits_1() throws Exception {
+    createGraphTables("test.vertex-08", "test.edge-08",
+      HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME, TEST_DATA_VERTEX_02,
+      TEST_DATA_EDGE_02);
+
+    splitTable("test.vertex-08", "n08", "n17");
+
+    Configuration conf = TEST_UTIL.getConfiguration();
+
+    // prepare splitsPath
+    String splitsPath = "/splitsinput-test-08";
+    org.trend.hgraph.mapreduce.lib.input.Driver driver_1 =
+        new org.trend.hgraph.mapreduce.lib.input.Driver(conf);
+    int code =
+ driver_1.run(new String[] { "-b", "1", "test.vertex-08", splitsPath });
+    Assert.assertEquals(0, code);
+
+    // run test
+    Driver driver = new Driver(conf);
+    int retCode =
+        driver.run(new String[] { "-c", "-i", "-p", splitsPath + "/part-r-00000", "test.vertex-08",
+            "test.edge-08", "/pagerank-test-08" });
+    assertEquals(0, retCode);
+    printVertexPageRank("test.vertex-08");
   }
 
   private static void printVertexPageRank(String tableName) throws IOException {
@@ -201,15 +241,14 @@ public class DriverTest extends AbstractHBaseGraphTest {
     }
   }
 
-  private static void createGraphTables(String vertexTableName, String edgeTableName, String cf)
+  private static void createGraphTables(String vertexTableName, String edgeTableName, String cf,
+      String vertexDataPath, String edgeDataPath)
       throws IOException {
     createGraphTable(vertexTableName, cf);
     createGraphTable(edgeTableName, cf);
 
-    generateGraphDataTest("org/trend/hgraph/mapreduce/pagerank/vertex-test-01.data",
-      vertexTableName, Constants.PAGE_RANK_CQ_NAME, false);
-    generateGraphDataTest("org/trend/hgraph/mapreduce/pagerank/edge-test-01.data", edgeTableName,
-      "dummy", false);
+    generateGraphDataTest(vertexDataPath, vertexTableName, Constants.PAGE_RANK_CQ_NAME, false);
+    generateGraphDataTest(edgeDataPath, edgeTableName, "dummy", false);
 
     printTable(vertexTableName);
     printTable(edgeTableName);
