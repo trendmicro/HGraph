@@ -229,8 +229,8 @@ public class DriverTest extends AbstractHBaseGraphTest {
       for (Result r : rs) {
         System.out.println("rowkey=" + Bytes.toString(r.getRow()) + ", ");
         System.out.println("pageRank="
-            + Bytes.toDouble(r.getValue(Bytes.toBytes(CF_PROPERTY),
-              Bytes.toBytes("pageRank" + CQ_DEL + "Double"))));
+            + Bytes.toString(r.getValue(Bytes.toBytes(CF_PROPERTY),
+              Bytes.toBytes("pageRank" + CQ_DEL + "String"))));
       }
     } catch (IOException e) {
       e.printStackTrace(System.err);

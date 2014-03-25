@@ -69,8 +69,8 @@ public class ImportPageRanks extends Configured implements Tool {
         put.add(
           Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
           Bytes.toBytes(Constants.PAGE_RANK_CQ_NAME
-              + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "Double"),
-          Bytes.toBytes(value.get()));
+              + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "String"),
+          Bytes.toBytes("" + value.get()));
         vertexTable.put(put);
       } catch (IOException e) {
         System.err.println("import pageRank failed !!");
