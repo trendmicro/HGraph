@@ -158,7 +158,7 @@ public class FindCandidateEntities extends Configured implements Tool {
     return 0;
   }
 
-  private static boolean isFileExists(String fileName) {
+  static boolean isFileExists(String fileName) {
     File file = new File(fileName);
     if (file.exists()) {
       System.err.println("file:" + fileName
