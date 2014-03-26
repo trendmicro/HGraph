@@ -64,7 +64,7 @@ public class CalculateIntermediatePageRankMapper extends
 
     context.getCounter(Counters.VERTEX_COUNT).increment(1);
     outgoingRowKeys =
-        getOutgoingRowKeys(conf, edgeTable, rowKey,
+        getOutgoingRowKeys(conf, vertexTable, edgeTable, rowKey,
           context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
     dispatchPageRank(outgoingRowKeys, pageRank, conf, edgeTable,
       context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
