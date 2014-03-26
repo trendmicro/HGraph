@@ -63,6 +63,10 @@ public class DriverTest extends AbstractHBaseGraphTest {
   private static final String CQ_DEL =
       HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER;
 
+  private static final String CF_PR = Constants.PAGE_RANK_CQ_NAME;
+  private static final String CF_PRT = Constants.PAGE_RANK_CQ_TMP_NAME;
+  private static final String CF_PRU = Constants.PAGE_RANK_CQ_UPDATED_NAME;
+
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     AbstractHBaseMiniClusterTest.setUpBeforeClass();
@@ -230,7 +234,14 @@ public class DriverTest extends AbstractHBaseGraphTest {
         System.out.println("rowkey=" + Bytes.toString(r.getRow()) + ", ");
         System.out.println("pageRank="
             + Bytes.toString(r.getValue(Bytes.toBytes(CF_PROPERTY),
-              Bytes.toBytes("pageRank" + CQ_DEL + "String"))));
+              Bytes.toBytes(CF_PR + CQ_DEL + "String"))));
+        System.out.println("tmpPageRank="
+            + Bytes.toString(r.getValue(Bytes.toBytes(CF_PROPERTY),
+              Bytes.toBytes(CF_PRT + CQ_DEL + "String"))));
+        System.out.println("pageRankUpdated="
+            + Bytes.toString(r.getValue(Bytes.toBytes(CF_PROPERTY),
+              Bytes.toBytes(CF_PRU + CQ_DEL + "String"))));
+
       }
     } catch (IOException e) {
       e.printStackTrace(System.err);

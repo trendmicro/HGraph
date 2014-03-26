@@ -34,4 +34,6 @@ public class Constants {
 
   public static final String PAGE_RANK_CQ_TMP_NAME = "tmpPageRank";
 
+  public static final String PAGE_RANK_CQ_UPDATED_NAME = "pageRankUpdated";
+
 }
