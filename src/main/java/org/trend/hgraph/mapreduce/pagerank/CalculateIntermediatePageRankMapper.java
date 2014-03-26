@@ -26,8 +26,8 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.trend.hgraph.HBaseGraphConstants;
 import org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.ContextWriterStrategy;
@@ -37,7 +37,7 @@ import org.trend.hgraph.mapreduce.pagerank.CalculateInitPageRankMapper.ContextWr
  * @author scott_miao
  */
 public class CalculateIntermediatePageRankMapper extends
-    Mapper<BytesWritable, DoubleWritable, BytesWritable, DoubleWritable> {
+    Mapper<Text, DoubleWritable, Text, DoubleWritable> {
 
   private HTable edgeTable = null;
   private HTable vertexTable = null;
@@ -52,7 +52,7 @@ public class CalculateIntermediatePageRankMapper extends
    * @see org.apache.hadoop.mapreduce.Mapper#map(java.lang.Object, java.lang.Object, Context)
    */
   @Override
-  protected void map(final BytesWritable key, final DoubleWritable value, final Context context)
+  protected void map(final Text key, final DoubleWritable value, final Context context)
       throws IOException, InterruptedException {
     String rowKey = Bytes.toString(key.getBytes()).trim();
     double pageRank = value.get();
@@ -71,7 +71,7 @@ public class CalculateIntermediatePageRankMapper extends
       new ContextWriterStrategy() {
         @Override
         public void write(String key, double value) throws IOException, InterruptedException {
-          context.write(new BytesWritable(Bytes.toBytes(key)), new DoubleWritable(value));
+          context.write(new Text(key), new DoubleWritable(value));
         }
       });
   }

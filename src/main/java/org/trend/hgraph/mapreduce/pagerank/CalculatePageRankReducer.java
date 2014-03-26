@@ -25,8 +25,8 @@ import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.trend.hgraph.HBaseGraphConstants;
 
@@ -37,7 +37,7 @@ import org.trend.hgraph.HBaseGraphConstants;
  * @see CalculateIntermediatePageRankMapper
  */
 public class CalculatePageRankReducer extends
-    Reducer<BytesWritable, DoubleWritable, BytesWritable, DoubleWritable> {
+ Reducer<Text, DoubleWritable, Text, DoubleWritable> {
   
   public static enum Counters {
     CHANGED_PAGE_RANK_COUNT, CAL_NEW_PR_TIME_CONSUMED, CMP_OLD_NEW_PR_TIME_CONSUMED
@@ -53,7 +53,7 @@ public class CalculatePageRankReducer extends
    * @see org.apache.hadoop.mapreduce.Reducer#reduce(java.lang.Object, java.lang.Iterable, Context)
    */
   @Override
-  protected void reduce(BytesWritable key, Iterable<DoubleWritable> incomingPageRanks,
+  protected void reduce(Text key, Iterable<DoubleWritable> incomingPageRanks,
       Context context) throws IOException, InterruptedException {
 
     String rowkey = Bytes.toString(key.getBytes()).trim();

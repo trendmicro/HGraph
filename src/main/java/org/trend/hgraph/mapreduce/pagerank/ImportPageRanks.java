@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -50,7 +50,7 @@ public class ImportPageRanks extends Configured implements Tool {
   private static Logger LOGGER = LoggerFactory.getLogger(ImportPageRanks.class);
 
   private static class ImportPageRanksMapper extends
-      Mapper<BytesWritable, DoubleWritable, BytesWritable, DoubleWritable> {
+      Mapper<Text, DoubleWritable, Text, DoubleWritable> {
 
     private HTable vertexTable;
 
@@ -60,7 +60,7 @@ public class ImportPageRanks extends Configured implements Tool {
      * org.apache.hadoop.mapreduce.Mapper.Context)
      */
     @Override
-    protected void map(BytesWritable key, DoubleWritable value, Context context)
+    protected void map(Text key, DoubleWritable value, Context context)
         throws IOException, InterruptedException {
       Put put = null;
       String rowKey = Bytes.toString(key.getBytes()).trim();
@@ -167,7 +167,7 @@ public class ImportPageRanks extends Configured implements Tool {
       FileInputFormat.setInputPaths(job, new Path(inputPath));
       job.setMapperClass(ImportPageRanksMapper.class);
       job.setInputFormatClass(SequenceFileInputFormat.class);
-      job.setMapOutputKeyClass(BytesWritable.class);
+      job.setMapOutputKeyClass(Text.class);
       job.setMapOutputValueClass(DoubleWritable.class);
 
       // only mapper

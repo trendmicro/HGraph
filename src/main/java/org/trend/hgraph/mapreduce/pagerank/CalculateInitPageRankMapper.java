@@ -31,8 +31,8 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Counter;
 import org.trend.hgraph.HBaseGraphConstants;
 
@@ -40,7 +40,7 @@ import org.trend.hgraph.HBaseGraphConstants;
  * A <code>Mapper</code> for calculating initial pagerank value from HBase.
  * @author scott_miao
  */
-public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, DoubleWritable> {
+public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritable> {
 
   private HTable edgeTable = null;
   private HTable vertexTable = null;
@@ -75,7 +75,7 @@ public class CalculateInitPageRankMapper extends TableMapper<BytesWritable, Doub
       new ContextWriterStrategy() {
       @Override
       public void write(String key, double value) throws IOException, InterruptedException {
-        context.write(new BytesWritable(Bytes.toBytes(key)), new DoubleWritable(value));
+          context.write(new Text(key), new DoubleWritable(value));
       }
     });
   }

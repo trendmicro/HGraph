@@ -29,8 +29,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.RowCounter;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -295,11 +295,11 @@ public class Driver extends Configured implements Tool {
       FileInputFormat.setInputPaths(job, new Path(inputPath));
       job.setMapperClass(CalculateIntermediatePageRankMapper.class);
       job.setInputFormatClass(SequenceFileInputFormat.class);
-      job.setMapOutputKeyClass(BytesWritable.class);
+      job.setMapOutputKeyClass(Text.class);
       job.setMapOutputValueClass(DoubleWritable.class);
 
       job.setReducerClass(CalculatePageRankReducer.class);
-      job.setOutputKeyClass(BytesWritable.class);
+      job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(DoubleWritable.class);
       job.setOutputFormatClass(SequenceFileOutputFormat.class);
       String outputPath = outputBasePath + "/" + timestamp;
@@ -331,10 +331,10 @@ public class Driver extends Configured implements Tool {
       Scan scan = new Scan();
 
       TableMapReduceUtil.initTableMapperJob(tableName, scan, CalculateInitPageRankMapper.class,
-        BytesWritable.class, DoubleWritable.class, job, true, tableInputFormat);
+        Text.class, DoubleWritable.class, job, true, tableInputFormat);
 
       job.setReducerClass(CalculatePageRankReducer.class);
-      job.setOutputKeyClass(BytesWritable.class);
+      job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(DoubleWritable.class);
       job.setOutputFormatClass(SequenceFileOutputFormat.class);
       String outputPath = outputBasePath + "/" + timestamp;
