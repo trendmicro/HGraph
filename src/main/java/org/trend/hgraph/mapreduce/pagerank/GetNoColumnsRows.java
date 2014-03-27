@@ -20,10 +20,7 @@ package org.trend.hgraph.mapreduce.pagerank;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -86,34 +83,9 @@ public class GetNoColumnsRows extends Configured implements Tool {
       context.getCounter(Counters.ROWS).increment(1L);
 
       List<Boolean> founds = null;
-      Entry<byte[], NavigableMap<byte[], byte[]>> cfEntry = null;
-      NavigableMap<byte[], byte[]> cqMap = null;
-      Entry<byte[], byte[]> cqEntry = null;
-      byte[] cf = null;
-      byte[] cq = null;
-
       founds = new ArrayList<Boolean>(pair.getFirst().length);
       for (int a = 0; a < pair.getFirst().length; a++) {
-        founds.add(Boolean.FALSE);
-      }
-
-      NavigableMap<byte[], NavigableMap<byte[], byte[]>> cfMap = value.getNoVersionMap();
-      for (Iterator<Entry<byte[], NavigableMap<byte[], byte[]>>> cfIt = cfMap.entrySet().iterator(); cfIt
-          .hasNext();) {
-        cfEntry = cfIt.next();
-        cf = cfEntry.getKey();
-        cqMap = cfEntry.getValue();
-        for (Iterator<Entry<byte[], byte[]>> cqIt = cqMap.entrySet().iterator(); cqIt.hasNext();) {
-          cqEntry = cqIt.next();
-          cq = cqEntry.getKey();
-          // whether hit target ?
-          for (int a = 0; a < pair.getFirst().length; a++) {
-            if (Arrays.equals(pair.getFirst()[a], cf) && Arrays.equals(pair.getSecond()[a], cq)) {
-              founds.set(a, Boolean.TRUE);
-              break;
-            }
-          }
-        }
+        founds.add(value.containsColumn(pair.getFirst()[a], pair.getSecond()[a]));
       }
 
       boolean write = false;
