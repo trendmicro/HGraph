@@ -23,10 +23,13 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.time.StopWatch;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -196,6 +199,21 @@ public class VariousTest {
     System.out.println("a=" + a);
     System.out.println("b=" + b);
     System.out.println("a comapre b =>" + a.compareTo(b));
+  }
+
+  @Test
+  public void testRegExPattern() {
+    String str = null;
+    String regex = null;
+    Pattern p = null;
+    Matcher m = null;
+
+    str =
+        "191.254.169.46||IPc986b1a0b0d88d5fb2629f||URL-2-2-3-y-h-r-t-7-.v32c-to-5-8w-0yc-tzl8-h2a-7f-ezc-oxt1-7-8y-0elh-be-3k-d.info||DOMAIN";
+    regex = "^.+\\|\\|.+\\|\\|.*";
+    p = Pattern.compile(regex);
+    m = p.matcher(str);
+    Assert.assertTrue(m.matches());
   }
 
 }
