@@ -64,7 +64,7 @@ public class GetRandomRowsByRegions extends Configured implements Tool {
       count++;
       context.getCounter(Counters.ROWS).increment(1L);
 
-      if (count % bypassRowSize == 0 && curSampleSize <= tarSampleSize) {
+      if (count % bypassRowSize == 0 && curSampleSize < tarSampleSize) {
         context.write(new Text(key.get()), NullWritable.get());
         curSampleSize++;
         context.getCounter(Counters.COLLECTEED_ROWS).increment(1L);

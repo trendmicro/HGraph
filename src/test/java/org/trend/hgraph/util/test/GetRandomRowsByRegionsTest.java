@@ -8,7 +8,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -23,8 +22,6 @@ public class GetRandomRowsByRegionsTest extends AbstractHBaseMiniClusterTest {
   private static final String[] CF = { "cf_1" };
   private static final String[] QF = { "qf_1" };
 
-  private static final byte[] B_TABLE = Bytes.toBytes(TABLE);
-  private static final byte[][] B_CF = transfer2BytesArray(CF);
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
