@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -105,8 +106,12 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
       LOGGER.info("test for id:" + id);
       timer.reset();
       timer.start();
+      LOGGER.debug("HEAD:g.getVertex");
       Vertex v = g.getVertex(id);
+      LOGGER.debug("TAIL:g.getVertex");
+      LOGGER.debug("HEAD:traverse(v, 1, level)");
       long count = traverse(v, 1, level);
+      LOGGER.debug("TAIL:traverse(v, 1, level)");
       timer.stop();
       long st = timer.getStartTime();
       StringBuffer sb = new StringBuffer();
@@ -155,17 +160,23 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     }
 
     private static long traverse(Vertex v, long cl, long ml) {
-      if (cl > ml) {
-        return 0;
+      if (cl >= ml) {
+        return 1;
       }
       // load data from remote
       long count = 1L;
       // v.getPropertyKeys();
+      LOGGER.debug("HEAD:for(Edge e: v.getEdges)");
       for (Edge e : v.getEdges()) {
+        LOGGER.debug("HEAD:e = v.getEdges[]");
         // load data from remote
         // e.getPropertyKeys();
+        LOGGER.debug("HEAD:traverse(e.getVertex, cl + 1, ml)");
         count += traverse((Vertex) e.getVertex(Direction.OUT), cl + 1, ml);
+        LOGGER.debug("TAIL:traverse(e.getVertex, cl + 1, ml)");
+        LOGGER.debug("TAIL:e = v.getEdges[]");
       }
+      LOGGER.debug("TAIL:for(Edge e: v.getEdges)");
       return count;
     }
   }
@@ -249,11 +260,13 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     conf.set(HBaseGraphConstants.HBASE_GRAPH_TABLE_EDGE_NAME_KEY, et);
 
     // run test threads
-    ExecutorService pool = Executors.newFixedThreadPool(threads);
+    ThreadFactory tf = new DaemonThreadFactory(Executors.defaultThreadFactory());
+    ExecutorService pool = Executors.newFixedThreadPool(threads, tf);
     @SuppressWarnings("rawtypes")
     List<Future> fs = new ArrayList<Future>();
     @SuppressWarnings("rawtypes")
     Future f = null;
+
     for (int a = 0; a < threads; a++) {
       fs.add(pool.submit(new Task(ipf, opp, conf, level)));
     }
@@ -270,6 +283,22 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     }
 
     return 0;
+  }
+
+  private static class DaemonThreadFactory implements ThreadFactory {
+    private ThreadFactory dtf;
+
+    protected DaemonThreadFactory(ThreadFactory dtf) {
+      super();
+      this.dtf = dtf;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread t = dtf.newThread(r);
+      t.setDaemon(true);
+      return t;
+    }
   }
 
   private static final void printUsage() {
