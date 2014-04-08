@@ -81,7 +81,7 @@ public class HGraphClientPerformanceTestTest extends AbstractHBaseMiniClusterTes
   public void testRun_ml2t10() throws Exception {
     // gen rowkeys file for later test
     Configuration conf = TEST_UTIL.getConfiguration();
-    String outputPath = "/run_b2t3";
+    String outputPath = "/run_ml2t10";
     Tool tool = new GetRandomRowsByRegions(conf);
     int status = tool.run(new String[] { "-b", "2", "-t", "3", VERTEX_TABLE, outputPath });
     Assert.assertEquals(0, status);

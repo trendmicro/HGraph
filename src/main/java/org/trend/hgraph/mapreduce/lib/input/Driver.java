@@ -50,7 +50,7 @@ public class Driver extends Configured implements Tool {
   private static Logger LOGGER = LoggerFactory.getLogger(Driver.class);
 
   private int mappersForOneRegion = CalculateInputSplitReducer.MAPPERS_FOR_ONE_REGION_DEFAULT_VALUE;
-  private int bypassRowKeys = CalculateInputSplitMapper.BY_PASS_KEYS_DEFAULT_VALUE;
+  private int bypassRowKeys = CalculateInputSplitMapper.Mapper.BY_PASS_KEYS_DEFAULT_VALUE;
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
@@ -129,7 +129,7 @@ public class Driver extends Configured implements Tool {
 
     LOGGER.info("outputPath=" + outputPath);
 
-    conf.set(CalculateInputSplitMapper.BY_PASS_KEYS, bypassRowKeys + "");
+    conf.set(CalculateInputSplitMapper.Mapper.BY_PASS_KEYS, bypassRowKeys + "");
     conf.set(CalculateInputSplitReducer.MAPPERS_FOR_ONE_REGION, mappersForOneRegion + "");
 
     Job job = createInputSplitJob(conf, outputPath);
@@ -158,7 +158,8 @@ public class Driver extends Configured implements Tool {
       job.setJarByClass(Driver.class);
       Scan scan = new Scan();
 
-      TableMapReduceUtil.initTableMapperJob(tableName, scan, CalculateInputSplitMapper.class,
+      TableMapReduceUtil.initTableMapperJob(tableName, scan,
+        CalculateInputSplitMapper.Mapper.class,
         Text.class, Text.class, job);
       job.setReducerClass(CalculateInputSplitReducer.class);
       job.setOutputKeyClass(Text.class);
