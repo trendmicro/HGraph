@@ -1,8 +1,10 @@
 package org.trend.hgraph.util.test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
@@ -58,27 +60,7 @@ public class HGraphClientPerformanceTestTest extends AbstractHBaseMiniClusterTes
     Assert.assertEquals(0, status);
 
     // merge content
-    Path path = new Path(outputPath);
-    FileSystem fs = path.getFileSystem(conf);
-    RemoteIterator<LocatedFileStatus> it = fs.listFiles(path, false);
-    LocatedFileStatus lfs = null;
-    InputStream is = null;
-    String fn = null;
-    String content = null;
-    File tf = File.createTempFile("rowkeys-1", null);
-    FileWriter tfw = new FileWriter(tf);
-    while (it.hasNext()) {
-      lfs = it.next();
-      fn = lfs.getPath().getName();
-      if (fn.startsWith("part-")) {
-        System.out.println("content for file:" + fn);
-        is = fs.open(lfs.getPath());
-        content = IOUtils.toString(is);
-        tfw.write(content);
-        IOUtils.closeQuietly(is);
-      }
-    }
-    IOUtils.closeQuietly(tfw);
+    File tf = mergeResults(conf, outputPath, "rowkeys-1");
 
     // run test
     File tPath = tf.getParentFile();
@@ -92,6 +74,38 @@ public class HGraphClientPerformanceTestTest extends AbstractHBaseMiniClusterTes
     Assert.assertEquals(0, status);
 
     // verify test results
+    outputTestResults(tPath);
+  }
+
+  @Test
+  public void testRun_ml2t10() throws Exception {
+    // gen rowkeys file for later test
+    Configuration conf = TEST_UTIL.getConfiguration();
+    String outputPath = "/run_b2t3";
+    Tool tool = new GetRandomRowsByRegions(conf);
+    int status = tool.run(new String[] { "-b", "2", "-t", "3", VERTEX_TABLE, outputPath });
+    Assert.assertEquals(0, status);
+
+    // merge content
+    File tf = mergeResults(conf, outputPath, "rowkeys-2");
+
+    // run test
+    File tPath = tf.getParentFile();
+    tPath = new File(tPath, "performanceTestResults_" + System.currentTimeMillis());
+    FileUtils.forceMkdir(tPath);
+
+    tool = new HGraphClientPerformanceTest(conf);
+    status =
+        tool.run(new String[] { "-m", "-l", "2", "-t", "10", VERTEX_TABLE, EDGE_TABLE,
+            tf.getAbsolutePath(), tPath.getAbsolutePath() });
+    Assert.assertEquals(0, status);
+
+    // verify test results
+    outputTestResults(tPath);
+  }
+
+  private void outputTestResults(File tPath) throws FileNotFoundException, IOException {
+    String content;
     Collection<File> csvs = FileUtils.listFiles(tPath, new String[] { "csv" }, false);
     FileReader fr = null;
     for (File csv : csvs) {
@@ -101,6 +115,33 @@ public class HGraphClientPerformanceTestTest extends AbstractHBaseMiniClusterTes
       System.out.println(content);
     }
     IOUtils.closeQuietly(fr);
+  }
+
+  private File mergeResults(Configuration conf, String outputPath, String tmpFileName)
+      throws IOException,
+      FileNotFoundException {
+    Path path = new Path(outputPath);
+    FileSystem fs = path.getFileSystem(conf);
+    RemoteIterator<LocatedFileStatus> it = fs.listFiles(path, false);
+    LocatedFileStatus lfs = null;
+    InputStream is = null;
+    String fn = null;
+    String content = null;
+    File tf = File.createTempFile(tmpFileName, null);
+    FileWriter tfw = new FileWriter(tf);
+    while (it.hasNext()) {
+      lfs = it.next();
+      fn = lfs.getPath().getName();
+      if (fn.startsWith("part-")) {
+        System.out.println("content for file:" + fn);
+        is = fs.open(lfs.getPath());
+        content = IOUtils.toString(is);
+        tfw.write(content);
+        IOUtils.closeQuietly(is);
+      }
+    }
+    IOUtils.closeQuietly(tfw);
+    return tf;
   }
 
   private static void loadTestData() throws Exception {

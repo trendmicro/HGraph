@@ -51,6 +51,9 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
 
     private static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd HH:mm:ss.S";
 
+    private boolean isMs;
+    private long taskSt;
+
     private File ipf;
     private FileReader fr;
     private LineIterator lit;
@@ -63,12 +66,13 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     private long level;
     private StopWatch timer;
 
-    protected Task(File inputFile, File outputPath, Configuration conf, long level) {
+    protected Task(File inputFile, File outputPath, Configuration conf, long level, boolean toMs) {
       super();
       this.ipf = inputFile;
       this.opf = outputPath;
       this.conf = conf;
       this.level = level;
+      this.isMs = toMs;
     }
 
     @Override
@@ -115,7 +119,11 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
       timer.stop();
       long st = timer.getStartTime();
       StringBuffer sb = new StringBuffer();
-      sb.append(DateFormatUtils.format(st, DATE_FORMAT_PATTERN) + ",");
+      if (isMs) {
+        sb.append((st - taskSt) + ",");
+      } else {
+        sb.append(DateFormatUtils.format(st, DATE_FORMAT_PATTERN) + ",");
+      }
       sb.append(id + ",");
       sb.append(count + ",");
       sb.append(timer.getTime() + "\n");
@@ -134,6 +142,11 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     private boolean initial() {
       // graph object
       g = HBaseGraphFactory.open(conf);
+
+      // task start time
+      if (isMs) {
+        taskSt = System.currentTimeMillis();
+      }
 
       // read ids
       try {
@@ -197,6 +210,7 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     int mustStartIdx = -1;
     int level = 2;
     int threads = 100;
+    boolean isMs = false;
     for (int a = 0; a < args.length; a++) {
       cmd = args[a];
       if (cmd.startsWith("-")) {
@@ -226,6 +240,8 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
             printUsage();
             return -1;
           }
+        } else if ("-m".equals(cmd)) {
+          isMs = true;
         } else {
           System.err.println("undefined option:" + cmd);
           printUsage();
@@ -268,7 +284,7 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     Future f = null;
 
     for (int a = 0; a < threads; a++) {
-      fs.add(pool.submit(new Task(ipf, opp, conf, level)));
+      fs.add(pool.submit(new Task(ipf, opp, conf, level, isMs)));
     }
 
     while (fs.size() > 0) {
@@ -304,9 +320,11 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
   private static final void printUsage() {
     System.err.print(HGraphClientPerformanceTest.class.getSimpleName() + " Usage:");
     System.err
-        .println(" [-l <numerric>] [-t <numeric>] <vertex-table> <edge-table> <input-rowkeys-file> <output-path>");
+        .println("[-m] [-l <numerric>] [-t <numeric>] <vertex-table> <edge-table> <input-rowkeys-file> <output-path>");
+    System.err.println("  -m: change time format to millisecond from each task start");
     System.err.println("  -l: how many levels to test, default is 2");
     System.err.println("  -t: how many threads to test, default is 100");
+
   }
 
   /**
