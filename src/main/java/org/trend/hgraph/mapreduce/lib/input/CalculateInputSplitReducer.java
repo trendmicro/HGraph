@@ -31,6 +31,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <code>Reducer</code> for calculating and preparing the <code>InputSplit</code>s file on HDFS.
@@ -39,6 +41,7 @@ import org.apache.hadoop.mapreduce.Reducer;
  */
 public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWritable> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(CalculateInputSplitReducer.class);
   static final String DELIMITER = "\t";
 
   public static final String MAPPERS_FOR_ONE_REGION = "hgraph.mapreduce.lib.input.mappers.one.region";
@@ -56,18 +59,20 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
       throws IOException, InterruptedException {
     String regionName = Bytes.toString(regionKey.getBytes()).trim();
     List<String> rowKeys = new ArrayList<String>();
+    String row = null;
     HRegionLocation location = null;
     int count = 0;
+
+    System.out.println("start to processing region:" + regionName);
     for (Text rowKey : values) {
-      rowKeys.add(Bytes.toString(rowKey.getBytes()).trim());
+      row = getKeyString(rowKey.getBytes());
+      LOGGER.debug("row=" + row);
+      rowKeys.add(row);
       if (count == 0) {
         location = vertexTable.getRegionLocation(rowKey.getBytes(), false);
       }
       count++;
     }
-
-    // for debugging
-    // System.out.println("rowKeys=" + rowKeys);
 
     if (mappersForOneRegion > count) {
       throw new IllegalArgumentException(MAPPERS_FOR_ONE_REGION
@@ -117,7 +122,7 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
         NullWritable.get());
       context.getCounter(Counters.ROW_COUNT).increment(1L);
     }
-
+    System.out.println("processing region:" + regionName + " compeleted");
     // do housekeeping
     rowKeys.clear();
     rowKeys = null;
@@ -139,6 +144,17 @@ public class CalculateInputSplitReducer extends Reducer<Text, Text, Text, NullWr
           + " shall not be empty or null");
     }
     vertexTable = new HTable(conf, vertexTableName);
+  }
+
+  private static String getKeyString(byte[] key) {
+    String keyString = null;
+    int idx = -1;
+    keyString = Bytes.toString(key).trim();
+    idx = keyString.indexOf(CalculateInputSplitMapper.Mapper.EMPTY_STRING);
+    if(idx > -1) {
+      keyString = keyString.substring(0, idx).trim();
+    }
+    return keyString;
   }
 
 }

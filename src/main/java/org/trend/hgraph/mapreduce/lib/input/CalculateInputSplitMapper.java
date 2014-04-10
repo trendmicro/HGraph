@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -62,6 +63,8 @@ public class CalculateInputSplitMapper extends Configured implements Tool {
     public static final String BY_PASS_KEYS = "hgraph.mapreduce.lib.input.mappers.bypass.keys";
     public static final int BY_PASS_KEYS_DEFAULT_VALUE = 1000;
 
+    static final String EMPTY_STRING = "\0";
+
     enum Counters {
       ROW_COUNT, COLLECT_ROW_COUNT
     }
@@ -79,6 +82,7 @@ public class CalculateInputSplitMapper extends Configured implements Tool {
       context.getCounter(Counters.ROW_COUNT).increment(1L);
       totalCount++;
       boolean toWrite = true;
+      String rowKey = null;
 
       // for debugging
       // String rowKey = Bytes.toString(key.get());
@@ -94,7 +98,8 @@ public class CalculateInputSplitMapper extends Configured implements Tool {
         // collect the start rowKey as well
         byte[] startKey = info.getStartKey();
         if (!Arrays.equals(HConstants.EMPTY_START_ROW, startKey)) {
-          context.write(new Text(regionEncodedName), new Text(startKey));
+          rowKey = getKeyString(startKey);
+          context.write(new Text(regionEncodedName), new Text(rowKey));
           context.getCounter(Counters.COLLECT_ROW_COUNT).increment(1L);
           toWrite = false;
         }
@@ -111,15 +116,24 @@ public class CalculateInputSplitMapper extends Configured implements Tool {
       byte[] endKey = info.getEndKey();
       // hit the rowkey we want to collect
       if (toWrite || (totalCount % bypassKeys == 0 && !Arrays.equals(endKey, key.get()))) {
-        context.write(new Text(regionEncodedName), new Text(key.get()));
+        rowKey = getKeyString(key.get());
+        context.write(new Text(regionEncodedName), new Text(rowKey));
         context.getCounter(Counters.COLLECT_ROW_COUNT).increment(1L);
       }
 
       // hit the end rowKey
       if (Arrays.equals(endKey, key.get()) && !Arrays.equals(HConstants.EMPTY_END_ROW, key.get())) {
-        context.write(new Text(regionEncodedName), new Text(key.get()));
+        rowKey = getKeyString(key.get());
+        context.write(new Text(regionEncodedName), new Text(rowKey));
         context.getCounter(Counters.COLLECT_ROW_COUNT).increment(1L);
       }
+    }
+
+    private static String getKeyString(byte[] bkey) {
+      String key = null;
+      key = Bytes.toString(bkey).trim();
+      key = key + EMPTY_STRING;
+      return key;
     }
 
     @Override
