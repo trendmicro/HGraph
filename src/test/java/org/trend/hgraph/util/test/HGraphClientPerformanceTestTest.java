@@ -121,6 +121,33 @@ public class HGraphClientPerformanceTestTest extends AbstractHBaseMiniClusterTes
     outputTestResults(tPath);
   }
 
+  @Test
+  public void testRun_i2000l2t10() throws Exception {
+    // gen rowkeys file for later test
+    Configuration conf = TEST_UTIL.getConfiguration();
+    String outputPath = "/run_i2000l2t10";
+    Tool tool = new GetRandomRowsByRegions(conf);
+    int status = tool.run(new String[] { "-b", "2", "-t", "3", VERTEX_TABLE, outputPath });
+    Assert.assertEquals(0, status);
+
+    // merge content
+    File tf = mergeResults(conf, outputPath, "rowkeys-2");
+
+    // run test
+    File tPath = tf.getParentFile();
+    tPath = new File(tPath, "performanceTestResults_" + System.currentTimeMillis());
+    FileUtils.forceMkdir(tPath);
+
+    tool = new HGraphClientPerformanceTest(conf);
+    status =
+        tool.run(new String[] { "-i", "2000", "-l", "2", "-t", "10", VERTEX_TABLE, EDGE_TABLE,
+            tf.getAbsolutePath(), tPath.getAbsolutePath() });
+    Assert.assertEquals(0, status);
+
+    // verify test results
+    outputTestResults(tPath);
+  }
+
   private void outputTestResults(File tPath) throws FileNotFoundException, IOException {
     String content;
     Collection<File> csvs = FileUtils.listFiles(tPath, new String[] { "csv" }, false);

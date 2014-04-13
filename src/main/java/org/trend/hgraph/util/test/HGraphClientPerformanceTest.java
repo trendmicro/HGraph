@@ -224,6 +224,7 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     int mustStartIdx = -1;
     int level = 2;
     int threads = 100;
+    long interval = 1000; // ms
     boolean isMs = false;
     for (int a = 0; a < args.length; a++) {
       cmd = args[a];
@@ -256,6 +257,17 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
           }
         } else if ("-m".equals(cmd)) {
           isMs = true;
+        } else if ("-i".equals(cmd)) {
+          a++;
+          cmd = args[a];
+          try {
+            interval = Long.parseLong(cmd);
+          } catch (NumberFormatException e) {
+            System.err.println("parse number for -i:" + cmd + " failed");
+            printUsage();
+            return -1;
+          }
+
         } else {
           System.err.println("undefined option:" + cmd);
           printUsage();
@@ -299,6 +311,9 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
 
     for (int a = 0; a < threads; a++) {
       fs.add(pool.submit(new Task(ipf, opp, conf, level, isMs)));
+      synchronized (this) {
+        wait(interval);
+      }
     }
 
     while (fs.size() > 0) {
@@ -334,10 +349,11 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
   private static final void printUsage() {
     System.err.print(HGraphClientPerformanceTest.class.getSimpleName() + " Usage:");
     System.err
-        .println("[-m] [-l <numerric>] [-t <numeric>] <vertex-table> <edge-table> <input-rowkeys-file> <output-path>");
+        .println("[-m] [-l <numerric>] [-t <numeric>] [-i <numeric>] <vertex-table> <edge-table> <input-rowkeys-file> <output-path>");
     System.err.println("  -m: change time format to millisecond from each task start");
     System.err.println("  -l: how many levels to test, default is 2");
     System.err.println("  -t: how many threads to test, default is 100");
+    System.err.println("  -i: how long the interval for each thread to start, default is 1000ms");
 
   }
 
