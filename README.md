@@ -10,13 +10,16 @@ We develop this project to fulfill requirements for processing large volumne of 
 
 So what HGraph mainly supports are...
 
-2. a HBase schema design specifically for storing graph data
+* a HBase schema design specifically for storing graph data
+
 For writing data, we use MR/pig/bulkload tool to write big volumne of data into HBase, which means that currently HGraph does not support writing feature.
 
-3. a partial graph API impl. derived from [Blueprints API](https://github.com/tinkerpop/blueprints)
+* a partial graph API impl. derived from [Blueprints API](https://github.com/tinkerpop/blueprints)
+
 HGraph currently supports simple traversal features, not including complex search yet.
 
-4. Based on the HBase schema design, graph algorithms can process on the graph data with MapReduce job
+* Based on the HBase schema design, graph algorithms can process on the graph data with MapReduce job
+
 Here is a simple pagerank impl. in package 'org.trend.hgraph.mapreduce.pagerank', you can run it to get some feelings. Or you can write your own algorithms to use these code as templates.
 
 
@@ -73,6 +76,15 @@ for(Edge edge : edges) {
 ```
 
 You can refer to our [testcases](https://github.com/trendmicro/HGraph/tree/master/src/test/java/org/trend/hgraph) for more detailed info.
+
+## Run PageRank
+Here is a bunch of MR classes to assemble a default PageRank impl., pls see our [sources](https://github.com/trendmicro/HGraph/tree/master/src/main/java/org/trend/hgraph/mapreduce/pagerank) for more details.
+
+To run the pageRank, execute following script directly
+
+    HGRAPH_HOME/scripts/pr/pr.sh -c -i vertex edge pr-results
+
+After pageRank finished, you can see the ranks already stored in your vertex table
 
 
 
