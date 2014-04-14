@@ -44,3 +44,17 @@ Here is a example
     'myapps-ups.com||domain-->host-->track.muapps-ups.com/InvoiceA1423AC.JPG.exe||url', 
     'property:property2', '…'
     
+So you can use following command to create the tables in hbase shell
+
+    -- create vertex table
+    create 'vertex', {NAME => 'property', BLOOMFILTER => 'ROW', COMPRESSION => ‘SNAPPY', TTL => '7776000'}
+    -- create edge table
+    create 'edge', {NAME => 'property', BLOOMFILTER => 'ROW', COMPRESSION => ‘SNAPPY', TTL => '7776000'}
+    
+## Clients
+There are three category of clients we expected
+### Real time client
+
+### Batch client
+
+### Tool
