@@ -51,10 +51,28 @@ So you can use following command to create the tables in hbase shell
     -- create edge table
     create 'edge', {NAME => 'property', BLOOMFILTER => 'ROW', COMPRESSION => ‘SNAPPY', TTL => '7776000'}
     
-## Clients
-There are three category of clients we expected
-### Real time client
+## Access data via graph API
+We use a graph API as a wrapper for the underlying HBase client API manipulations, this provides better semantic for user to access the graph data. Following is a sample code to use the graph API to get the vertex and edge instances
 
-### Batch client
+```java
+// initial configuration
+Configuration conf = HBaseConfigurastion.create();
+conf.set("hbase.graph.table.vertex.name", "vertex");
+conf.set("hbase.graph.table.edge.name", "edge");
+Graph graph = HBaseGraphFactory.open(TEST_UTIL.getConfiguration());
 
-### Tool
+// get vertex and edge instances
+Vertex vertex = this.graph.getVertex("malware");
+Vertex subVertex = null;
+Iterable<Edge> edges = 
+	vertex.getEdges(Direction.OUT, "connect", "infect", "trigger");
+for(Edge edge : edges) {
+  subVertex = edge.getVertex(Direction.OUT);
+  // do further process...
+}
+```
+
+You can refer to our [testcases](https://github.com/trendmicro/HGraph/tree/master/src/test/java/org/trend/hgraph) for more detailed info.
+
+
+
