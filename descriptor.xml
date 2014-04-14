@@ -30,7 +30,7 @@
       <directory>${project.build.scriptSourceDirectory}</directory>
       <outputDirectory>scripts</outputDirectory>
       <includes>
-        <include>*</include>
+        <include>**/*</include>
       </includes>
     </fileSet>
   </fileSets>
