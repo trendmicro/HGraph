@@ -253,6 +253,7 @@ public class GetNoColumnsRows extends Configured implements Tool {
   private static void printUsage() {
     System.err.println(GetNoColumnsRows.class.getSimpleName()
         + " Usage: [-a | -o] <table> <output-path> <family:qualifier> [<family:qualifier> [...]]");
+    System.err.println("Find the rowkeys if they have no the corresponding column(s) by given criteria.");
     System.err.println("  -a: AND (default), -o : OR");
   }
 

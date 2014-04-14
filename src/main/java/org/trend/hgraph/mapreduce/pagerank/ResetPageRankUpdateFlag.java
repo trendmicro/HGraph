@@ -80,8 +80,8 @@ public class ResetPageRankUpdateFlag extends Configured implements Tool {
   }
 
   private static void printUsage() {
-    System.err.println(ResetPageRankUpdateFlag.class.getSimpleName() + "Usage: ");
-    System.err.println("<vertex-table-name>");
+    System.err.println(ResetPageRankUpdateFlag.class.getSimpleName() + " Usage: <vertex-table>");
+    System.err.println("reset the " + Constants.PAGE_RANK_CQ_UPDATED_NAME + " to 0 for <vertex-table>");
   }
 
   public static final void main(String[] args) throws Exception {

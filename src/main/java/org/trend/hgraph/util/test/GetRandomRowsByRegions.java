@@ -203,12 +203,13 @@ public class GetRandomRowsByRegions extends Configured implements Tool {
 
   private static void printUsage() {
     System.err.println(GetRandomRowsByRegions.class.getSimpleName()
-        + " Usage: [-b <numeric>] [-t <numeric>] <table-name> <output-path>");
-    System.err.println(
-      "  -b, -bypass-row-size: bypass how many row(s) to pick one sample, default:"
-            + Mapper.BYPASS_ROW_SIZE_DEFAULT);
-    System.err.println(
-      "  -t, -target-sample-size: how many target sample(s) to collect, default:"
+        + " Usage: [-b <num>] [-t <num>] <table-name> <output-path>");
+    System.err.println("get the random rowkeys from <table-name> by given conditions (-b and -t),");
+    System.err.println("and store the result into <output-path>. Usually companion with "
+        + HGraphClientPerformanceTest.class.getSimpleName());
+    System.err.println("  -b, -bypass-row-size: bypass how many row(s) to pick one sample, default:"
+        + Mapper.BYPASS_ROW_SIZE_DEFAULT);
+    System.err.println("  -t, -target-sample-size: how many target sample(s) to collect, default:"
         + Mapper.TARGET_SAMPLE_SIZE_DEFAULT);
   }
 

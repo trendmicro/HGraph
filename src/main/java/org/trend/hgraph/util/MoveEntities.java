@@ -169,9 +169,10 @@ public class MoveEntities extends Configured implements Tool {
 
   private static void printUsage() {
     System.err
-        .println("Usage:"
-            + MoveEntities.class.getSimpleName()
+        .println(MoveEntities.class.getSimpleName() + " Usage:"
             + " <vertex-input-file> <edge-input-file> <src-vertex-table> <src-edge-table> <dest-vertex-table> <dest-edge-table>");
+    System.err.println("Move the keyvalues by given rowkeys stored in <vertex-input-file> and <edgge-input-file>,");
+    System.err.println("from src tables to dest tables. Usually companion with " + FindCandidateEntities.class.getSimpleName());
   }
 
   /**

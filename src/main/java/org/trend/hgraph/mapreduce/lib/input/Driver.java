@@ -176,7 +176,7 @@ public class Driver extends Configured implements Tool {
 
   private static void printUsage() {
     System.err.println(Driver.class.getSimpleName() + "Usage: [-m <n>] [-b <n>] <table-name> <output-path>");
-    System.err.println("  prepare the start/end rowkeys for HTable InputSplits for MR processes");
+    System.err.println("prepare the start/end rowkeys for HTable InputSplits for MR processes");
     System.err.println("  -h, --help: print usage");
     System.err.println("  -m,  --mappers-for-one-region: specify how many mappers for one region, default is 3");
     System.err.println("  -b,  --bypass-rowkeys: speficy how many rowkeys to bypass for one region, default is 1000");

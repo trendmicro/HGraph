@@ -247,10 +247,9 @@ public class CalculateInputSplitMapper extends Configured implements Tool {
   }
 
   private static void printUsage() {
-    System.err.print(CalculateInputSplitMapper.class.getSimpleName() + "Usage: ");
-    System.err.println("[-b <n>] <table-name> <output-path>");
-    System.err
-        .println("  -b, --bypass-rowkeys: speficy how many rowkeys to bypass for one region, default is 1000");
+    System.err.print(CalculateInputSplitMapper.class.getSimpleName() + " Usage: [-b <n>] <table-name> <output-path>");
+    System.err.println("It is used for test the Mapper output, should not be used for normal usage.");
+    System.err.println("  -b, --bypass-rowkeys: speficy how many rowkeys to bypass for one region, default is 1000");
   }
 
   public static final void main(String[] args) throws Exception {

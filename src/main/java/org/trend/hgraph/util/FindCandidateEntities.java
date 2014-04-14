@@ -286,9 +286,12 @@ public class FindCandidateEntities extends Configured implements Tool {
   }
 
   private static void printUsage() {
-    System.err.println("Usage: " + FindCandidateEntities.class.getSimpleName()
+    System.err.println(FindCandidateEntities.class.getSimpleName() + "Usage: "
         + " [-n <num>] [-s <start-row>] <vertex-table-name> <edge-table-name>"
         + " <vertext-output-file> <edge-output-file>");
+    System.err.println("Find a vertex by given number of associated vertices ('-n <num>'),");
+    System.err.println("then output the results into <vertex-output-file> and <edge-output-file> respectively.");
+    System.err.println("usually companion with " + MoveEntities.class.getSimpleName());
   }
 
   /**

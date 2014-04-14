@@ -350,6 +350,8 @@ public class HGraphClientPerformanceTest extends Configured implements Tool {
     System.err.print(HGraphClientPerformanceTest.class.getSimpleName() + " Usage:");
     System.err
         .println("[-m] [-l <numerric>] [-t <numeric>] [-i <numeric>] <vertex-table> <edge-table> <input-rowkeys-file> <output-path>");
+    System.err.println("A simple tool for testing the query performance for both <vertex-table> and <edge-table>.");
+    System.err.println("Usually companion with " + GetRandomRowsByRegions.class.getSimpleName());
     System.err.println("  -m: change time format to millisecond from each task start");
     System.err.println("  -l: how many levels to test, default is 2");
     System.err.println("  -t: how many threads to test, default is 100");

@@ -183,8 +183,8 @@ public class ImportPageRanks extends Configured implements Tool {
   }
 
   private static void printUsage() {
-    System.err.println(ImportPageRanks.class.getName()
-        + " Usage: <input-path> <hbase-vertex-table>");
+    System.err.println(ImportPageRanks.class.getName() + " Usage: <input-path> <hbase-vertex-table>");
+    System.err.println("Import the pageRank intermediate data into <hbase-vertex-table>");
   }
 
   /**

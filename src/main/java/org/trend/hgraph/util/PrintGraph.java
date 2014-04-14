@@ -154,9 +154,10 @@ public class PrintGraph extends Configured implements Tool {
   }
 
   private static void printUsage() {
-    String name = PrintGraph.class.getSimpleName();
-    System.out.println("Usage: " + name
+    System.out.println(PrintGraph.class.getSimpleName() + " Usage: "
         + " [-l <level-to-print>] <vertex-table-name> <edge-table-name> <vertex-id>");
+    System.err.println("print out the vertex and its associated sub-edges and sub-vertices for number of levels (-l <level-to-print>)");
+    System.err.println("by given <vertex-id>");
   }
 
   /**
