@@ -23,9 +23,7 @@
 cur_dir=$(dirname $0)
 cur_dir=$(cd ${cur_dir}; pwd)
 
-export conf_dir=$cur_dir/../conf
+export conf_dir=$cur_dir/../../conf
 source $conf_dir/hgraph-env.sh
 
-
-HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Dhgraph.log.file=generate-test-data.log -Xmx1g -Xms512m" hadoop \
-  com.trend.blueprints.util.test.GenerateTestData $*
+HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Dhgraph.log.file=reset-pr-update-flag.log" hadoop org.trend.hgraph.mapreduce.pagerank.ResetPageRankUpdateFlag $*

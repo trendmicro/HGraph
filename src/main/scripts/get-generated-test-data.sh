@@ -23,13 +23,10 @@
 cur_dir=$(dirname $0)
 cur_dir=$(cd ${cur_dir}; pwd)
 
-log_dir=$cur_dir/../logs
+export conf_dir=$cur_dir/../conf
+source $conf_dir/hgraph-env.sh
 
-if [ ! -d $log_dir  ]; then
-	mkdir $log_dir
-fi
-
+export HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Dhgraph.log.file=get-generate-test-data.log -Xmx1g -Xms512m"
 for( a=0; a<10; a=a+1 ); do
-	HADOOP_CLIENT_OPTS="-Xmx1g -Xms512m" HADOOP_CLASSPATH="$cur_dir/../*" hadoop \
-		com.trend.blueprints.util.test.GetGeneratedGraphData $@ &> $log_dir/get-generated-test-data-`date +%Y%m%d%H%M%S`.log
+	 hadoop com.trend.blueprints.util.test.GetGeneratedGraphData $*
 done
