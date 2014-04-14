@@ -45,7 +45,8 @@ public class CalculateIntermediatePageRankMapper extends
   private String tmpPageRankCq = Constants.PAGE_RANK_CQ_TMP_NAME;
 
   enum Counters {
-    VERTEX_COUNT, GET_OUTGOING_VERTICES_TIME_CONSUMED, DISPATCH_PR_TIME_CONSUMED
+    VERTEX_COUNT, OUTGOING_EDGE_COUNT, GET_OUTGOING_VERTICES_TIME_CONSUMED,
+    DISPATCH_PR_TIME_CONSUMED
   }
   /*
    * (non-Javadoc)
@@ -68,6 +69,7 @@ public class CalculateIntermediatePageRankMapper extends
           context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
     dispatchPageRank(outgoingRowKeys, pageRank, conf, edgeTable,
       context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
+      context.getCounter(Counters.OUTGOING_EDGE_COUNT),
       new ContextWriterStrategy() {
         @Override
         public void write(String key, double value) throws IOException, InterruptedException {

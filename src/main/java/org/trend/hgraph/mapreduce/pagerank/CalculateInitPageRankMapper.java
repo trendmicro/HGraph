@@ -48,7 +48,8 @@ public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritabl
   private String tmpPageRankCq = Constants.PAGE_RANK_CQ_TMP_NAME;
 
   enum Counters {
-    VERTEX_COUNT, GET_OUTGOING_VERTICES_TIME_CONSUMED, DISPATCH_PR_TIME_CONSUMED
+    VERTEX_COUNT, OUTGOING_EDGE_COUNT, GET_OUTGOING_VERTICES_TIME_CONSUMED,
+    DISPATCH_PR_TIME_CONSUMED
   }
 
   /*
@@ -72,6 +73,7 @@ public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritabl
           context.getCounter(Counters.GET_OUTGOING_VERTICES_TIME_CONSUMED));
     dispatchPageRank(outgoingRowKeys, pageRank, conf, edgeTable,
       context.getCounter(Counters.DISPATCH_PR_TIME_CONSUMED),
+      context.getCounter(Counters.OUTGOING_EDGE_COUNT),
       new ContextWriterStrategy() {
       @Override
       public void write(String key, double value) throws IOException, InterruptedException {
@@ -81,10 +83,14 @@ public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritabl
   }
 
   static void dispatchPageRank(List<String> outgoingRowKeys, double pageRank, Configuration conf,
-      HTable edgeTable, Counter counter, ContextWriterStrategy strategy)
+      HTable edgeTable, Counter dispatchPrTimeConsumeCounter, Counter outgoingEdgeCounter,
+      ContextWriterStrategy strategy)
       throws IOException,
       InterruptedException {
-    double pageRankForEachOutgoing = pageRank / (double) outgoingRowKeys.size();
+    int outgoingEdgeCount = outgoingRowKeys.size();
+    outgoingEdgeCounter.increment(outgoingEdgeCount);
+    double pageRankForEachOutgoing = pageRank / (double) outgoingEdgeCount;
+
     StopWatch sw = null;
     String outgoingRowKey = null;
     try {
@@ -95,7 +101,7 @@ public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritabl
         strategy.write(outgoingRowKey, pageRankForEachOutgoing);
       }
       sw.stop();
-      counter.increment(sw.getTime());
+      dispatchPrTimeConsumeCounter.increment(sw.getTime());
     } catch (IOException e) {
       System.err.println("failed while writing outgoingRowKey:" + outgoingRowKey);
       e.printStackTrace(System.err);
