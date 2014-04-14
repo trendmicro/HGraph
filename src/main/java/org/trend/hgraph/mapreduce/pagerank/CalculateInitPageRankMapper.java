@@ -24,7 +24,6 @@ import java.util.List;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -127,7 +126,7 @@ public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritabl
     String key = null;
     LinkedList<String> rowKeys = new LinkedList<String>();
     StopWatch sw = null;
-    Put put = null;
+    // Put put = null;
     try {
       Scan scan = getRowKeyOnlyScan(rowKey);
       sw = new StopWatch();
@@ -137,14 +136,6 @@ public class CalculateInitPageRankMapper extends TableMapper<Text, DoubleWritabl
         key = getOutgoingRowKey(r);
         // collect outgoing rowkeys
         rowKeys.add(key);
-        // set the update flag to false (0)
-        put = new Put(Bytes.toBytes(key));
-        put.add(
-          Bytes.toBytes(HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME),
-          Bytes.toBytes(Constants.PAGE_RANK_CQ_UPDATED_NAME
-              + HBaseGraphConstants.HBASE_GRAPH_TABLE_COLFAM_PROPERTY_NAME_DELIMITER + "String"),
-          Bytes.toBytes("0"));
-        vertexTable.put(put);
       }
       sw.stop();
       counter.increment(sw.getTime());
