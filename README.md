@@ -22,3 +22,25 @@ Here is a simple pagerank impl. in package 'org.trend.hgraph.mapreduce.pagerank'
 
 ## HBase schema design
 We use following schema to store our graph data
+
+    --hbase schema
+    <rowkey>, <column-family:column-qualifier>, <value>
+    --Table: vertex
+    '<vertex-id>||<entity-type>', 'property:<property-key>@<property-value-type>', <property-value>
+    --Table: edge
+    '<vertex1-row-key>--><label>--><vertex2-row-key>', 'property:<property-key>@<property-value-type>', <property-value>
+
+Here is a example
+
+    -- vertex table, has two vertex instances, one domain, and one url
+    'myapps-ups.com||domain', 'property:ip@String', '…'
+    'myapps-ups.com||domain', 'property:asn@String', '…'
+    …
+    'track.muapps-ups.com/InvoiceA1423AC.JPG.exe||url', 'property:path@String', '…'
+    'track.muapps-ups.com/InvoiceA1423AC.JPG.exe||url', 'property:parameter@String', '…'
+    -- edge table, has one edge instances, with two properties 
+    'myapps-ups.com||domain-->host-->track.muapps-ups.com/InvoiceA1423AC.JPG.exe||url', 
+    'property:property1', '…'
+    'myapps-ups.com||domain-->host-->track.muapps-ups.com/InvoiceA1423AC.JPG.exe||url', 
+    'property:property2', '…'
+    
