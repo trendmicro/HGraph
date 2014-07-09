@@ -87,4 +87,9 @@ To run the pageRank, execute following script directly
 After pageRank finished, you can see the ranks already stored in your vertex table
 
 
+## Scala / Clojure / Groovy
+Refer to samples/ for how HGraph is called from Scala / Clojure / Groovy.
 
+License
+=======
+Apache 2.  See LICENSE.txt for details.
