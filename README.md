@@ -3,7 +3,7 @@ HGraph
 
 HGraph is an opensource (apache license v2.0) for storing graph data in HBase and running graph related algorithmns
 
-We develop this project to fulfill requirements for processing large volumne of graph data, in our internal services. The usecase shown in following picture.
+We develop this project to fulfill requirements for processing large volume of graph data, in our internal services. The usecase shown in following picture.
 
 ![our usecase](https://dl.dropboxusercontent.com/u/9473777/hgraph/usecase-01.png)
 
